@@ -1,0 +1,75 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { TextField, Button, Box, Typography, Alert } from "@mui/material";
+import axios from "axios";
+
+export default function Login() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [msg, setMsg] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();  // React Router navigation hook
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMsg("");
+    setIsLoading(true);
+    
+    try {
+      const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
+      // Store the token in localStorage
+      localStorage.setItem("authToken", res.data.token);
+
+      // Store user ID if available in the response
+      if (res.data.user.userId) {
+        localStorage.setItem("userId", res.data.user.userId);
+      }
+
+      setMsg("Login successful!");
+
+      // Short timeout before redirect to show success message
+      setTimeout(() => {
+        navigate("/home");  // Use React Router navigation
+      }, 500);
+    } catch (err) {
+      setMsg(err.response?.data?.message || "Login failed");
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <TextField
+        fullWidth
+        label="Email"
+        type="email"
+        value={email}
+        onChange={e => setEmail(e.target.value)}
+        required
+        disabled={isLoading}
+      />
+      <TextField
+        fullWidth
+        label="Password"
+        type="password"
+        value={password}
+        onChange={e => setPassword(e.target.value)}
+        required
+        disabled={isLoading}
+      />
+      <Button 
+        fullWidth 
+        variant="contained" 
+        type="submit"
+        disabled={isLoading}
+      >
+        {isLoading ? "Logging in..." : "Login"}
+      </Button>
+      {msg && (
+        <Alert severity={msg.includes("successful") ? "success" : "error"}>
+          {msg}
+        </Alert>
+      )}
+    </Box>
+  );
+}
