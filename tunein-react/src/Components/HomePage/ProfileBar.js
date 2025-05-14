@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../AuthPage/AuthContext.js';
 import axios from 'axios';
-import { 
-  Box, Button, Typography, Avatar, Chip, TextField, 
-  IconButton, CircularProgress 
+import {
+  Box, Button, Typography, Avatar,
+  IconButton, CircularProgress
 } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-import DeleteIcon from '@mui/icons-material/Delete';
+// Removed Chip, TextField, AddIcon, DeleteIcon as they are now in GenrePicker
 import LogoutIcon from '@mui/icons-material/Logout';
+import GenrePicker from '../.reusable/GenrePicker'; // Import the new component
 
 const ProfileBar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -17,37 +18,39 @@ const ProfileBar = () => {
     genres: [],
     points: 0
   });
-  const [newGenre, setNewGenre] = useState('');
+  // Removed newGenre state
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();  // React Router navigation hook
+  const [error, setError] = useState(null); // For profile loading errors
+  const [genreUpdateError, setGenreUpdateError] = useState(null); // Specific for genre updates
+  const navigate = useNavigate();
+  const { logout } = useAuth();
 
-  // Fetch user profile data
   useEffect(() => {
     const fetchProfile = async () => {
       try {
         setLoading(true);
+        setError(null); // Clear previous errors
+        setGenreUpdateError(null);
         const token = localStorage.getItem('authToken');
-        
+
         if (!token) {
           setError('Authentication token not found');
           setLoading(false);
+          logout(); // Log out if no token
+          navigate('/auth');
           return;
         }
 
         const response = await axios.get('http://localhost:5000/api/user/profile', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        
+
         setProfile(response.data);
-        setError(null);
       } catch (err) {
         console.error('Error fetching profile:', err);
-        setError('Failed to load profile data');
-        
-        // If unauthorized, redirect to login
-        if (err.response?.status === 401) {
-          localStorage.removeItem('authToken');
+        setError('Failed to load profile data.');
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          logout();
           navigate('/auth');
         }
       } finally {
@@ -58,175 +61,151 @@ const ProfileBar = () => {
     if (isOpen) {
       fetchProfile();
     }
-  }, [isOpen, navigate]); // Changed from router to navigate
+  }, [isOpen, navigate, logout]);
 
   const handleToggleOpen = () => {
     setIsOpen(!isOpen);
   };
 
-  const handleAddGenre = async () => {
-    if (!newGenre.trim() || profile.genres.length >= 5) return;
-    
+  // This function will be called by GenrePicker when genres are changed locally
+  const handleGenresUpdatedByPicker = async (updatedGenres) => {
     try {
+      setGenreUpdateError(null); // Clear previous genre update error
       const token = localStorage.getItem('authToken');
-      const updatedGenres = [...profile.genres, newGenre];
-      
-      await axios.put('http://localhost:5000/api/user/profile/genres', 
-        { genres: updatedGenres },
-        { headers: { Authorization: `Bearer ${token}` }}
-      );
-      
-      setProfile(prev => ({
-        ...prev,
-        genres: updatedGenres
-      }));
-      setNewGenre('');
-    } catch (err) {
-      setError('Failed to add genre');
-      console.error(err);
-    }
-  };
+      if (!token) {
+        setGenreUpdateError('Authentication token not found. Please log in again.');
+        logout();
+        navigate('/auth');
+        return;
+      }
 
-  const handleDeleteGenre = async (genreToDelete) => {
-    try {
-      const token = localStorage.getItem('authToken');
-      const updatedGenres = profile.genres.filter(genre => genre !== genreToDelete);
-      
-      await axios.put('http://localhost:5000/api/user/profile/genres', 
+      // API call to update genres on the server
+      await axios.put('http://localhost:5000/api/user/profile/genres',
         { genres: updatedGenres },
         { headers: { Authorization: `Bearer ${token}` }}
       );
-      
+
+      // Update local profile state upon successful API call
       setProfile(prev => ({
         ...prev,
         genres: updatedGenres
       }));
     } catch (err) {
-      setError('Failed to delete genre');
-      console.error(err);
+      console.error('Failed to update genres:', err);
+      setGenreUpdateError('Failed to update genres. Please try again.');
+      // Optionally, you might want to revert genres in GenrePicker
+      // by re-fetching profile or passing the old genres back,
+      // but for now, we'll just show an error.
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userId');
-    navigate('/auth');
+    logout();
+    navigate('/auth'); // Redirect to auth page after logout
   };
 
-  return (
-    <Box sx={{ 
-      position: 'fixed',
-      left: 0,
-      top: 0,
-      bottom: 0,
-      width: isOpen ? '300px' : '30px',
-      backgroundColor: 'black',
-      color: 'white',
-      padding: '20px',
-      transition: 'width 0.3s ease',
-      overflow: 'hidden',
-      boxShadow: '0px 0px 10px rgba(3, 3, 3, 0.5)',
-      zIndex: 1000
-    }}>
-      <Button 
-        onClick={handleToggleOpen} 
-        variant="contained"
-        color="primary"
-        sx={{ 
-          minWidth: '30px',
-          position: 'absolute',
-          right: '10px',
-          top: '10px'
-        }}
-      >
-        {isOpen ? '←' : '→'}
-      </Button>
+return (
+  <Box sx={{
+    position: 'fixed',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: isOpen ? '300px' : '48px', // Slightly wider for button
+    backgroundColor: isOpen ? 'rgba(0, 0, 0, 0.97)' : 'transparent', // Blue when open, transparent when closed
+    color: 'white',
+    padding: isOpen ? '20px' : '20px 0',
+    transition: 'width 0.3s ease, background-color 0.3s ease, padding 0.3s ease',
+    overflow: 'hidden',
+    boxShadow: isOpen ? '0px 0px 10px rgba(33, 150, 243, 0.3)' : 'none',
+    zIndex: 1000,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: isOpen ? 'flex-start' : 'center',
+  }}>
+    <IconButton
+      onClick={handleToggleOpen}
+      color="primary"
+      sx={{
+        width: 44,
+        height: 44,
+        borderRadius: '50%',
+        backgroundColor: '#1976d2', // Material blue 700
+        color: 'white',
+        position: 'absolute',
+        left: isOpen ? '270px' : '2px', // Adjust for new width
+        top: '20px',
+        zIndex: 1001,
+        boxShadow: 3,
+        border: '2px solid #fff',
+        transition: 'left 0.3s, background-color 0.3s',
+        '&:hover': {
+          backgroundColor: '#1565c0', // Material blue 800
+        },
+      }}
+    >
+  {isOpen ? <span style={{fontSize: 20}}>←</span> : <span style={{fontSize: 20}}>→</span>}
+</IconButton>
 
       {isOpen && (
-        <Box sx={{ mt: 5 }}>
+        <Box sx={{ mt: 5, flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
           {loading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
               <CircularProgress color="secondary" />
             </Box>
           ) : error ? (
-            <Typography color="error">{error}</Typography>
+            <Typography color="error" sx={{ textAlign: 'center', p:2 }}>{error}</Typography>
           ) : (
             <>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                <Avatar 
-                  src={profile.profilePic} 
+                <Avatar
+                  src={profile.profilePic}
                   alt={profile.nickname}
                   sx={{ width: 80, height: 80 }}
                 />
                 <Box>
                   <Typography variant="h6">{profile.nickname}</Typography>
-                  <Typography variant="body2" sx={{ 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    gap: 0.5, 
-                    color: 'gold' 
+                  <Typography variant="body2" sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    color: 'gold'
                   }}>
                     Points: {profile.points}
                   </Typography>
                 </Box>
               </Box>
 
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                Genres ({profile.genres.length}/5):
-              </Typography>
-              
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                {profile.genres.map((genre, index) => (
-                  <Chip 
-                    key={index} 
-                    label={genre}
-                    onDelete={() => handleDeleteGenre(genre)}
-                    deleteIcon={<DeleteIcon />}
-                    sx={{ 
-                      backgroundColor: '#2a2a2a',
-                      color: 'white',
-                      '&:hover': { backgroundColor: '#3a3a3a' }
-                    }}
-                  />
-                ))}
+              {/* Use the GenrePicker component */}
+              <GenrePicker
+                currentGenres={profile.genres}
+                onGenresUpdated={handleGenresUpdatedByPicker}
+                maxGenres={5}
+                disabled={loading} // Disable while loading profile or updating genres
+                textFieldStyles={{ // Custom styles for TextField in ProfileBar context
+                  '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    '& fieldset': { borderColor: 'gray' },
+                    '&:hover fieldset': { borderColor: 'lightgray' },
+                    '&.Mui-focused fieldset': { borderColor: 'primary.main' },
+                  },
+                  '& .MuiInputLabel-root': { color: 'gray' },
+                  '& .MuiFormHelperText-root': { color: 'error.main' }, // For local errors in picker
+                }}
+              />
+              {genreUpdateError && <Typography color="error" variant="caption" sx={{mt:1}}>{genreUpdateError}</Typography>}
+
+
+              <Box sx={{ marginTop: 'auto', pt: 2 }}> {/* Pushes logout to bottom */}
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<LogoutIcon />}
+                  onClick={handleLogout}
+                  sx={{ width: '100%' }}
+                >
+                  Logout
+                </Button>
               </Box>
-
-              {profile.genres.length < 5 && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <TextField
-                    size="small"
-                    label="Add genre"
-                    value={newGenre}
-                    onChange={(e) => setNewGenre(e.target.value)}
-                    variant="outlined"
-                    sx={{ 
-                      flexGrow: 1,
-                      '& .MuiOutlinedInput-root': {
-                        color: 'white',
-                      },
-                      '& .MuiInputLabel-root': {
-                        color: 'gray',
-                      },
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: 'gray',
-                      }
-                    }}
-                  />
-                  <IconButton onClick={handleAddGenre} color="primary">
-                    <AddIcon />
-                  </IconButton>
-                </Box>
-              )}
-
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<LogoutIcon />}
-                onClick={handleLogout}
-                sx={{ mt: 4, width: '100%' }}
-              >
-                Logout
-              </Button>
             </>
           )}
         </Box>

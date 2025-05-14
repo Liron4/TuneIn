@@ -5,17 +5,10 @@ const path = require('path');
 const registerController = require('../controllers/authControllers/registerController');
 const loginController = require('../controllers/authControllers/loginController');
 
-// Multer config for profile pic uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/'); // Make sure this folder exists
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
-});
+// Temporary memory storage for multer
+// We'll only use this to parse the multipart form data, not for storing
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
-
 
 // Registration route (with profile pic upload)
 router.post('/register', upload.single('profilePic'), registerController.register);

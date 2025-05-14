@@ -3,7 +3,7 @@ import Login from "../Components/AuthPage/Login";
 import Register from "../Components/AuthPage/Register";
 import { Box, Button, ButtonGroup, Paper, Container } from "@mui/material";
 
-export default function AuthPage() {
+export default function AuthPage({onAuthSuccess}) {
   const [isLogin, setIsLogin] = useState(true);
 
   return (
@@ -32,7 +32,7 @@ export default function AuthPage() {
               </Button>
             </ButtonGroup>
           </Box>
-          {isLogin ? <Login /> : <Register />}
+          {isLogin ? <Login onAuthSuccess={onAuthSuccess}/> : <Register />}
         </Paper>
       </Container>
     </Box>

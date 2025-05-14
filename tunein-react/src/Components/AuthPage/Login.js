@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { TextField, Button, Box, Typography, Alert } from "@mui/material";
+import { useAuth } from "./AuthContext";
 import axios from "axios";
 
 export default function Login() {
@@ -8,28 +9,21 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();  // React Router navigation hook
+  const navigate = useNavigate();
+   const { login } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMsg("");
     setIsLoading(true);
-    
+
     try {
       const res = await axios.post("http://localhost:5000/api/auth/login", { email, password });
-      // Store the token in localStorage
-      localStorage.setItem("authToken", res.data.token);
-
-      // Store user ID if available in the response
-      if (res.data.user.userId) {
-        localStorage.setItem("userId", res.data.user.userId);
-      }
-
+      localStorage.setItem("userId", res.data.user.userId); // Optional: keep if needed
+      login(res.data.token); // Use context to update auth state
       setMsg("Login successful!");
-
-      // Short timeout before redirect to show success message
       setTimeout(() => {
-        navigate("/home");  // Use React Router navigation
+        navigate("/home");
       }, 500);
     } catch (err) {
       setMsg(err.response?.data?.message || "Login failed");
@@ -57,9 +51,9 @@ export default function Login() {
         required
         disabled={isLoading}
       />
-      <Button 
-        fullWidth 
-        variant="contained" 
+      <Button
+        fullWidth
+        variant="contained"
         type="submit"
         disabled={isLoading}
       >

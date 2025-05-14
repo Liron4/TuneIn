@@ -1,6 +1,7 @@
 const User = require('../../models/User');
 const bcrypt = require('bcryptjs');
-const path = require('path');
+const axios = require('axios');
+const FormData = require('form-data');
 
 function parseGenres(genresStr) {
   return genresStr
@@ -8,9 +9,33 @@ function parseGenres(genresStr) {
     : [];
 }
 
-exports.register = async (req, res) => {
+// Function to upload image to Imgur
+async function uploadToImgur(imageBuffer) {
+  try {
+    // Create form data for Imgur API
+    const formData = new FormData();
+    formData.append('image', imageBuffer.toString('base64'));
+    
+    const response = await axios.post('https://api.imgur.com/3/image', formData, {
+      headers: {
+        Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`,
+        ...formData.getHeaders()
+      }
+    });
+    
+    if (response.data.success) {
+      return response.data.data.link;
+    } else {
+      throw new Error('Failed to upload image to Imgur');
+    }
+  } catch (error) {
+    console.error('Imgur upload error:', error?.response?.data || error.message);
+    throw new Error('Failed to upload image to Imgur');
+  }
+}
 
-    console.log("Registering user...");
+exports.register = async (req, res) => {
+  console.log("Registering user...");
   try {
     const { email, nickname, password, retypePassword, genres } = req.body;
 
@@ -33,10 +58,17 @@ exports.register = async (req, res) => {
       return res.status(400).json({ message: 'Nickname already in use.' });
     }
 
-    // Handle profile picture (always present)
-    let profilePicPath = req.file ? path.join('uploads', req.file.filename) : null;
-    if (!profilePicPath) {
+    // Check if file exists
+    if (!req.file) {
       return res.status(400).json({ message: 'Profile picture is required.' });
+    }
+
+    // Upload profile picture to Imgur
+    let profilePicUrl;
+    try {
+      profilePicUrl = await uploadToImgur(req.file.buffer);
+    } catch (imgurError) {
+      return res.status(500).json({ message: 'Failed to upload profile picture.' });
     }
 
     // Hash password
@@ -48,7 +80,7 @@ exports.register = async (req, res) => {
       nickname,
       password: hashedPassword,
       genres: parseGenres(genres),
-      profilePic: profilePicPath
+      profilePic: profilePicUrl  // Store the Imgur URL instead of local path
     });
 
     await user.save();
