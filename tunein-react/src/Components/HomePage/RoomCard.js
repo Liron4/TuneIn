@@ -23,13 +23,22 @@ const RoomCard = ({ room }) => {
       maxWidth: '100%', 
       height: '100%',
       display: 'flex', 
-      flexDirection: 'column',
-      transition: 'transform 0.2s',
-      '&:hover': {
-        transform: 'scale(1.02)',
-      }
+      flexDirection: 'column'
     }}> 
-      <CardActionArea onClick={handleCardClick} sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'stretch' }}>
+      <CardActionArea 
+        onClick={handleCardClick} 
+        sx={{ 
+          flexGrow: 1, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'stretch',
+          cursor: 'pointer',
+          transition: 'transform 0.2s',
+          '&:hover': {
+            transform: 'scale(1.02)',
+          }
+        }}
+      >
         <CardMedia
           component="img"
           height="140"

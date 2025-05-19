@@ -16,13 +16,13 @@ function App() {
     return isAuthenticated ? element : <Navigate to="/auth" replace />;
   };
 
-    return (
+  return (
     <AuthProvider>
       <Router>
         <Routes>
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/home" element={<ProtectedRoute element={<HomePage />} />} />
-          <Route path="/room" element={<ProtectedRoute element={<RoomPage />} />} />
+          <Route path="/room/:roomId" element={<ProtectedRoute element={<RoomPage />} />} />
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>
       </Router>

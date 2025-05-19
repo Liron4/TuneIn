@@ -18,7 +18,21 @@ const RoomBrowser = () => {
   const fetchRooms = async () => {
     setLoading(true);
     try {
-      const response = await axios.get('http://localhost:5000/api/rooms');
+      const token = localStorage.getItem('authToken');
+      const userId = localStorage.getItem('userId');
+      if (!token || !userId) {
+        setError('Authentication required. Please log in again.');
+        setLoading(false);
+        return;
+      }
+      const response = await axios.get(`http://localhost:5000/api/rooms`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        params: {
+          userId: userId
+        }
+      });
       setRooms(response.data);
       setError(null);
     } catch (err) {
