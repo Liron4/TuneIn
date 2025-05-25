@@ -18,30 +18,66 @@ const SearchSong = () => {
   const [searchResults, setSearchResults] = useState([]);
 
   const handleSearchSubmit = async (e) => {
-  e.preventDefault();
-  if (!query.trim()) return;
+    e.preventDefault();
+    if (!query.trim()) return;
 
+    try {
+      setSearching(true);
+      setError(null);
+
+      // Call your backend proxy endpoint
+      const response = await axios.get(`http://localhost:5000/api/youtube/search?q=${encodeURIComponent(query)}`);
+      setSearchResults(response.data.items || []);
+    } catch (err) {
+      console.error('Error searching YouTube:', err);
+      setError('Failed to search for songs. Please try again.');
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
+
+
+const handleSongAction = async (song) => {
   try {
-    setSearching(true);
-    setError(null);
+    // Get token from localStorage
+    const token = localStorage.getItem('authToken');
+    if (!token) throw new Error('No auth token found');
 
-    // Call your backend proxy endpoint
-    const response = await axios.get(`http://localhost:5000/api/youtube/search?q=${encodeURIComponent(query)}`);
-    setSearchResults(response.data.items || []);
+    // Fetch user profile to get the username (only token needed)
+    const profileRes = await axios.get(`http://localhost:5000/api/user/profile`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const username = profileRes.data.nickname;
+
+    // Format the song object
+    const formattedSong = {
+      title: song.snippet.title,
+      artist: song.snippet.channelTitle,
+      thumbnail: song.snippet.thumbnails.default.url,
+      id: song.id.videoId,
+      addedby: username
+    };
+
+    // Send to backend (extract roomId from URL path)
+    const pathParts = window.location.pathname.split('/');
+    const roomId = pathParts[pathParts.indexOf('room') + 1];
+    if (!roomId) throw new Error('No roomId found in URL path');
+    
+    await axios.post(
+      `http://localhost:5000/api/queue/${roomId}/add`,
+      { song: formattedSong },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    console.log('Song added to queue successfully!');
+    // Optionally show success message to user
   } catch (err) {
-    console.error('Error searching YouTube:', err);
-    setError('Failed to search for songs. Please try again.');
-    setSearchResults([]);
-  } finally {
-    setSearching(false);
+    console.error('Error adding song to queue:', err);
+    // Optionally show error message to user
   }
 };
 
-  // Placeholder handler for when a song card is clicked
-  const handleSongAction = (song) => {
-    console.log('Song selected:', song);
-    // Future functionality: add to queue
-  };
 
   return (
     <Box sx={{ width: '100%' }}>

@@ -17,7 +17,6 @@ const roomSchema = new mongoose.Schema({
     ref: 'User', 
     required: true 
   },
-
   isHidden: { 
     type: Boolean, 
     default: false 
@@ -25,6 +24,15 @@ const roomSchema = new mongoose.Schema({
   createdAt: { 
     type: Date, 
     default: Date.now 
+  },
+  songqueue: {
+  type: [mongoose.Schema.Types.Mixed], // array of Mixed types
+  default: [] 
+  },
+
+  capacity: {
+    type: Number,
+    default: 0
   }
 });
 

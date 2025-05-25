@@ -11,13 +11,15 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 
 const SongCard = ({ song, context = 'search', onAction, disabled = false }) => {
-  // Determine icon based on context (search vs queue)
+  // Determine icon based on context (search vs queue vs display-only)
   const getActionIcon = () => {
     switch (context) {
       case 'search':
         return <AddIcon />;
       case 'queue':
-        return <RemoveIcon />;
+        return <RemoveIcon sx={{ color: '#f44336' }} />; // Red remove icon
+      case 'display':
+        return null; // No icon for songs added by others
       default:
         return <AddIcon />;
     }
@@ -40,6 +42,7 @@ const SongCard = ({ song, context = 'search', onAction, disabled = false }) => {
   };
 
   const formattedSong = formatSongData(song);
+  const actionIcon = getActionIcon();
 
   return (
     <ListItem
@@ -52,22 +55,22 @@ const SongCard = ({ song, context = 'search', onAction, disabled = false }) => {
         }
       }}
       secondaryAction={
-        onAction && (
+        onAction && actionIcon && (
           <IconButton 
             edge="end" 
             onClick={() => onAction(song)}
             disabled={disabled}
             sx={{ 
-              color: '#1DB954',
+              color: context === 'queue' ? '#f44336' : '#1DB954', // Red for remove, green for add
               '&:hover': { 
-                color: '#1AA34A' 
+                color: context === 'queue' ? '#d32f2f' : '#1AA34A'
               },
               '&.Mui-disabled': {
                 color: 'rgba(255,255,255,0.3)'
               }
             }}
           >
-            {getActionIcon()}
+            {actionIcon}
           </IconButton>
         )
       }
