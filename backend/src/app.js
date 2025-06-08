@@ -10,6 +10,7 @@ const userRoutes = require('./routes/userRoutes');
 const roomRoutes = require('./routes/roomBrowserRoutes');
 const searchSongRoute = require('./routes/insideRoom/searchSongRoute');
 const queueRoutes = require('./routes/insideRoom/queueRoutes');
+const currentSongRoutes = require('./routes/insideRoom/CurrentSongRoute');
 
 const app = express();
 app.use(cors());
@@ -19,6 +20,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/youtube', searchSongRoute);
 app.use('/api/queue', queueRoutes);
+app.use('/api/song', currentSongRoutes);
 
 const server = http.createServer(app);
 
@@ -57,3 +59,5 @@ io.on('connection', (socket) => {
 mongoose.connect(process.env.MONGO_URI)
   .then(() => server.listen(5000, () => console.log('Server running on port 5000'))) 
   .catch(err => console.error(err));
+
+// to future add: initalize playback service.

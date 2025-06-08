@@ -50,13 +50,29 @@ const handleSongAction = async (song) => {
     });
     const username = profileRes.data.nickname;
 
+    // Fetch video duration
+    const videoId = song.id.videoId;
+    const durationRes = await axios.get(
+      `http://localhost:5000/api/youtube/duration?id=${videoId}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    // Extract duration directly from response
+    const durationInSeconds = durationRes.data.duration;
+
+    // If duration is not found, throw error to prevent adding the song
+    if (!durationInSeconds) {
+      throw new Error('Could not retrieve song duration');
+    }
+
     // Format the song object
     const formattedSong = {
       title: song.snippet.title,
       artist: song.snippet.channelTitle,
       thumbnail: song.snippet.thumbnails.default.url,
-      id: song.id.videoId,
-      addedby: username
+      id: videoId,
+      addedby: username,
+      duration: durationInSeconds
     };
 
     // Send to backend (extract roomId from URL path)

@@ -30,6 +30,11 @@ const roomSchema = new mongoose.Schema({
   default: [] 
   },
 
+  currentSong: {
+    type: mongoose.Schema.Types.Mixed, 
+    default: null
+  },
+
   capacity: {
     type: Number,
     default: 0
