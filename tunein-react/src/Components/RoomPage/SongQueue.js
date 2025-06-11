@@ -23,7 +23,7 @@ const SongQueue = () => {
         const token = localStorage.getItem('authToken');
         if (!token) return;
 
-        const response = await axios.get('http://localhost:5000/api/user/profile', {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/user/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setCurrentUsername(response.data.nickname);
@@ -42,7 +42,7 @@ const SongQueue = () => {
     
     if (!roomId) return;
 
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io(process.env.REACT_APP_SOCKET_URL);
     
     // Join the room
     newSocket.emit('joinRoom', roomId);
@@ -70,7 +70,7 @@ const SongQueue = () => {
       
       if (!roomId || !token) return;
 
-      const response = await axios.get(`http://localhost:5000/api/queue/${roomId}`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/queue/${roomId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -96,7 +96,7 @@ const SongQueue = () => {
       const pathParts = window.location.pathname.split('/');
       const roomId = pathParts[pathParts.indexOf('room') + 1];
 
-      await axios.delete(`http://localhost:5000/api/queue/${roomId}/${index}`, {
+      await axios.delete(`${process.env.REACT_APP_API_URL}/api/queue/${roomId}/${index}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

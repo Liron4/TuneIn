@@ -13,7 +13,11 @@ const queueRoutes = require('./routes/insideRoom/queueRoutes');
 const currentSongRoutes = require('./routes/insideRoom/CurrentSongRoute');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: '*',  // Allow all origins during development
+  credentials: true
+}));
+
 app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
@@ -22,12 +26,20 @@ app.use('/api/youtube', searchSongRoute);
 app.use('/api/queue', queueRoutes);
 app.use('/api/song', currentSongRoutes);
 
+app.get('/api/server-info', (req, res) => {
+  res.json({
+    apiUrl: req.protocol + '://' + req.get('host'),
+    socketUrl: req.protocol + '://' + req.get('host'),
+    timestamp: Date.now()
+  });
+});
+
 const server = http.createServer(app);
 
 // Setup Socket.IO with CORS
 const io = socketIo(server, {
   cors: {
-    origin: "http://localhost:3000", // Your React app URL
+    origin: '*',  // Allow all origins
     methods: ["GET", "POST", "PUT", "DELETE"]
   }
 });

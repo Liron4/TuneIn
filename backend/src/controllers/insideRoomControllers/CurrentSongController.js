@@ -37,6 +37,7 @@ exports.playNextSong = async (roomId, io) => {
     io.to(`room-${roomId}`).emit('nextSongCountdown', { 
       countdown: SONG_TRANSITION_DELAY / 1000,
       nextSong: room.songqueue[0]
+      // TO CHECK: the code may be vulnerable because we may add more songs to the queue during the countdown
     });
     
     // Wait for the countdown before playing the next song
@@ -83,7 +84,7 @@ exports.playNextSong = async (roomId, io) => {
   }
 };
 
-// Skip current song
+// Skip current song - TO BE to be used with the future voting system
 exports.skipSong = async (req, res) => {
   try {
     const { roomId } = req.params;

@@ -18,7 +18,7 @@ const RoomPage = () => {
       try {
         setLoading(true);
         const token = localStorage.getItem('authToken');
-        const response = await axios.get(`http://localhost:5000/api/rooms/${roomId}`, {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms/${roomId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         setRoom(response.data);

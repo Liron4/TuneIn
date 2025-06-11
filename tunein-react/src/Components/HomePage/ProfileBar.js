@@ -41,7 +41,7 @@ const ProfileBar = () => {
           return;
         }
 
-        const response = await axios.get('http://localhost:5000/api/user/profile', {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/user/profile`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -80,7 +80,7 @@ const ProfileBar = () => {
       }
 
       // API call to update genres on the server
-      await axios.put('http://localhost:5000/api/user/profile/genres',
+      await axios.put(`${process.env.REACT_APP_API_URL}/api/user/profile/genres`,
         { genres: updatedGenres },
         { headers: { Authorization: `Bearer ${token}` }}
       );

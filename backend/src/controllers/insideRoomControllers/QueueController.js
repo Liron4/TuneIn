@@ -1,4 +1,5 @@
 const Room = require('../../models/Room');
+const CurrentSongController = require('./CurrentSongController');
 
 exports.addSongToQueue = async (req, res) => {
   try {
@@ -29,8 +30,7 @@ exports.addSongToQueue = async (req, res) => {
 
     // If no song is currently playing, start playing this one
     if (!room.currentSong && room.songqueue.length === 1) {
-      // Import CurrentSongController if not already imported at the top
-      const CurrentSongController = require('./CurrentSongController');
+
 
       // Play the first song
       await CurrentSongController.playNextSong(roomId, io);

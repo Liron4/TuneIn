@@ -25,7 +25,7 @@ const RoomBrowser = () => {
         setLoading(false);
         return;
       }
-      const response = await axios.get(`http://localhost:5000/api/rooms`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/rooms`, {
         headers: {
           'Authorization': `Bearer ${token}`
         },
@@ -56,9 +56,9 @@ const handleCreateRoom = async (roomData) => {
     }
 
     // Include the token in request headers
-    const response = await axios.post('http://localhost:5000/api/rooms', roomData, {
+    const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms`, roomData, {
       headers: {
-        'Authorization': `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`,
         // No need to set Content-Type with FormData - axios sets it automatically with boundary
       }
     });

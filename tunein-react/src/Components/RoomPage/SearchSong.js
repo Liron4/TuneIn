@@ -26,7 +26,7 @@ const SearchSong = () => {
       setError(null);
 
       // Call your backend proxy endpoint
-      const response = await axios.get(`http://localhost:5000/api/youtube/search?q=${encodeURIComponent(query)}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/youtube/search?q=${encodeURIComponent(query)}`);
       setSearchResults(response.data.items || []);
     } catch (err) {
       console.error('Error searching YouTube:', err);
@@ -45,7 +45,7 @@ const handleSongAction = async (song) => {
     if (!token) throw new Error('No auth token found');
 
     // Fetch user profile to get the username (only token needed)
-    const profileRes = await axios.get(`http://localhost:5000/api/user/profile`, {
+    const profileRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/user/profile`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const username = profileRes.data.nickname;
@@ -53,7 +53,7 @@ const handleSongAction = async (song) => {
     // Fetch video duration
     const videoId = song.id.videoId;
     const durationRes = await axios.get(
-      `http://localhost:5000/api/youtube/duration?id=${videoId}`,
+      `${process.env.REACT_APP_API_URL}/api/youtube/duration?id=${videoId}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
@@ -81,14 +81,15 @@ const handleSongAction = async (song) => {
     if (!roomId) throw new Error('No roomId found in URL path');
     
     await axios.post(
-      `http://localhost:5000/api/queue/${roomId}/add`,
+      `${process.env.REACT_APP_API_URL}/api/queue/${roomId}/add`,
       { song: formattedSong },
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
     console.log('Song added to queue successfully!');
+    setSearchResults([]); // Clear search results on success
     // Optionally show success message to user
-  } catch (err) {
+    } catch (err) {
     console.error('Error adding song to queue:', err);
     // Optionally show error message to user
   }

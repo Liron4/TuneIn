@@ -28,7 +28,8 @@ const CurrentSong = () => {
     if (!roomId) return;
 
     console.log('Setting up socket connection for room:', roomId);
-    const newSocket = io('http://localhost:5000');
+    const newSocket = io(process.env.REACT_APP_SOCKET_URL);
+
     
     // Join the room
     newSocket.emit('joinRoom', roomId);
@@ -99,7 +100,7 @@ const CurrentSong = () => {
         if (!token) return;
 
         console.log('Fetching current song for room:', roomId);
-        const response = await axios.get(`http://localhost:5000/api/song/${roomId}`, {
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/song/${roomId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
@@ -140,7 +141,7 @@ const CurrentSong = () => {
       const token = localStorage.getItem('authToken');
       if (!token || !roomId) return;
 
-      await axios.post(`http://localhost:5000/api/song/${roomId}/skip`, {}, {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/song/${roomId}/skip`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
     } catch (err) {
