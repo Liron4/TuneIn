@@ -1,81 +1,47 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Box } from '@mui/material';
 
 const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
     const playerRef = useRef(null);
     const youtubePlayerRef = useRef(null);
     const [playerReady, setPlayerReady] = useState(false);
+    const [apiLoaded, setApiLoaded] = useState(!!window.YT);
+    const initializationRef = useRef(false);
 
-    // Only initialize the player when videoId changes
-    useEffect(() => {
-        // Store the current videoId to check if we need to reinitialize
-        const currentVideoId = videoId;
-
-        // Load YouTube IFrame API
-        if (!window.YT) {
-            const tag = document.createElement('script');
-            tag.src = 'https://www.youtube.com/iframe_api';
-
-            const firstScriptTag = document.getElementsByTagName('script')[0];
-            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-            window.onYouTubeIframeAPIReady = () => initializePlayer(currentVideoId);
-        } else {
-            initializePlayer(currentVideoId);
-        }
-
-        return () => {
-            // Only destroy the player if we're unmounting or changing videos
-            if (youtubePlayerRef.current) {
-                setPlayerReady(false);
-                youtubePlayerRef.current.destroy();
-                youtubePlayerRef.current = null;
-            }
-        };
-    }, [videoId]); // Only depend on videoId
-
-    // Update player when startTime changes, but only if player is ready
-    useEffect(() => {
-        // Added a small delay and more robust checking
-        if (playerReady && youtubePlayerRef.current) {
-            const timer = setTimeout(() => {
-                try {
-                    // Double-check that the player is still valid and has seekTo method
-                    if (youtubePlayerRef.current && typeof youtubePlayerRef.current.seekTo === 'function') {
-                        youtubePlayerRef.current.seekTo(startTime);
-                    } else {
-                        console.log('Player not ready for seeking yet');
-                    }
-                } catch (err) {
-                    console.error('Error seeking to time:', err);
-                }
-            }, 500); // Add small delay to ensure player is fully initialized
-
-            return () => clearTimeout(timer);
-        }
-    }, [startTime, playerReady]);
-
-    const initializePlayer = (currentVideoId) => {
+    // Create a stable initialization function with useCallback
+    const initializePlayer = useCallback(() => {
+        // Prevent double initialization
+        if (initializationRef.current || !videoId) return;
+        
         if (!window.YT || !window.YT.Player) {
-            // YouTube API not ready yet, retry in 100ms
-            setTimeout(() => initializePlayer(currentVideoId), 100);
-            return;
+            console.log('YouTube API not ready yet');
+            return; // The API onReady callback will handle initialization
         }
+
+        console.log('Initializing player for video:', videoId);
+        initializationRef.current = true;
 
         try {
-            // Only reinitialize if necessary
+            // Reuse existing player when possible
             if (youtubePlayerRef.current) {
+                console.log('Loading new video in existing player');
                 youtubePlayerRef.current.loadVideoById({
-                    videoId: currentVideoId,
+                    videoId: videoId,
                     startSeconds: startTime
                 });
+                
+                // Ensure player is ready and playing
+                youtubePlayerRef.current.playVideo();
+                setPlayerReady(true);
                 return;
             }
 
+            // Create new player instance
+            console.log('Creating new YouTube player instance');
             youtubePlayerRef.current = new window.YT.Player(playerRef.current, {
                 height: '100%',
                 width: '100%',
-                videoId: currentVideoId,
+                videoId: videoId,
                 playerVars: {
                     autoplay: 1,
                     controls: 1,
@@ -84,29 +50,19 @@ const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
                     rel: 0,
                     start: startTime || 0,
                     modestbranding: 1,
-                    playsinline: 1, // Important for mobile
-                    mute: 0 // Start unmuted if possible
+                    playsinline: 1,
+                    mute: 0
                 },
                 events: {
                     onReady: (event) => {
                         console.log('YouTube player ready');
                         setPlayerReady(true);
 
-                        // Force autoplay with multiple approaches
+                        // Force autoplay
                         try {
-                            // Try to unmute and play (works in most browsers)
                             event.target.unMute();
                             event.target.playVideo();
-
-                            // Add fallback for when autoplay is blocked
-                            setTimeout(() => {
-                                // Check if video isn't playing yet
-                                if (event.target.getPlayerState() !== 1) {
-                                    console.log('Attempting secondary play...');
-                                    event.target.playVideo();
-                                }
-                            }, 1000);
-
+                            
                             if (startTime > 0) {
                                 event.target.seekTo(startTime);
                             }
@@ -126,8 +82,66 @@ const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
             });
         } catch (err) {
             console.error('Error initializing YouTube player:', err);
+            initializationRef.current = false; // Reset flag to allow retry
         }
-    };
+    }, [videoId, startTime]);
+
+    // Load YouTube API
+    useEffect(() => {
+        if (window.YT) {
+            setApiLoaded(true);
+            return;
+        }
+
+        console.log('Loading YouTube API...');
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+
+        // Define global callback
+        window.onYouTubeIframeAPIReady = () => {
+            console.log('YouTube API loaded');
+            setApiLoaded(true);
+        };
+
+        const firstScriptTag = document.getElementsByTagName('script')[0];
+        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+        return () => {
+            // Cleanup the global callback if component unmounts before API loads
+            window.onYouTubeIframeAPIReady = null;
+        };
+    }, []);
+
+    // Reset initialization flag when video changes
+    useEffect(() => {
+        initializationRef.current = false;
+        setPlayerReady(false);
+    }, [videoId]);
+
+    // Initialize player when API is loaded and we have a videoId
+    useEffect(() => {
+        if (apiLoaded && videoId) {
+            initializePlayer();
+        }
+    }, [apiLoaded, videoId, initializePlayer]);
+
+    // Handle seek when startTime changes but videoId doesn't
+    useEffect(() => {
+        if (playerReady && youtubePlayerRef.current && typeof youtubePlayerRef.current.seekTo === 'function') {
+            youtubePlayerRef.current.seekTo(startTime);
+        }
+    }, [startTime, playerReady]);
+
+    // Clean up the player when component unmounts
+    useEffect(() => {
+        return () => {
+            if (youtubePlayerRef.current) {
+                youtubePlayerRef.current.destroy();
+                youtubePlayerRef.current = null;
+                initializationRef.current = false;
+            }
+        };
+    }, []);
 
     return (
         <Box

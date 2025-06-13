@@ -29,9 +29,7 @@ exports.addSongToQueue = async (req, res) => {
     io.to(`room-${roomId}`).emit('queueUpdated', { queue: room.songqueue });
 
     // If no song is currently playing, start playing this one
-    if (!room.currentSong && room.songqueue.length === 1) {
-
-
+    if (!room.currentSong && room.songqueue.length === 1 && !CurrentSongController.isCountdownActive(roomId)) {
       // Play the first song
       await CurrentSongController.playNextSong(roomId, io);
     }
