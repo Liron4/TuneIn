@@ -58,38 +58,50 @@ const RoomPage = () => {
       display: 'flex', 
       height: '100vh',
       backgroundColor: '#121212',
-      color: 'white'
+      color: 'white',
+      overflow: 'hidden' // Prevent page scroll
     }}>
-      {/* Static left sidebar */}
-      <LeftBar />
+      {/* Left Sidebar */}
+      <LeftBar roomName={room?.name} />
       
-      {/* Main content area with fixed margin */}
+      {/* Main content area - responsive */}
       <Box sx={{ 
-        flexGrow: 1, 
-        marginLeft: '300px',  // Fixed margin to account for sidebar
-        padding: '20px',
-        overflow: 'auto',
+        flexGrow: 1,
+        marginLeft: { 
+          xs: 0,      // No margin on mobile (sidebar will overlay)
+          md: '300px' // Desktop margin for sidebar
+        },
+        padding: { 
+          xs: '10px', // Smaller padding on mobile
+          md: '20px'  // Normal padding on desktop
+        },
+        overflow: 'hidden', // No scrollbar
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        height: '100vh'
       }}>
-        <Typography variant="h4" gutterBottom>
-          {room?.name || 'Music Room'}
-        </Typography>
         
-        {/* Media Player Section */}
+        {/* Current Song Section - aligned with LeftBar title */}
         <Box sx={{ 
           width: '100%', 
-          maxWidth: '800px', 
+          maxWidth: { 
+            xs: '100%',  // Full width on mobile
+            md: '800px'  // Max width on desktop
+          },
           margin: '0 auto',
-          mt: 4 
+          mt: { 
+            xs: 1,  // Minimal top margin on mobile
+            md: 2   // Normal margin on desktop
+          },
+          flex: '1 1 auto', // Take available space but allow shrinking
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden'
         }}>
           <CurrentSong />
         </Box>
         
-        {/* Space for future components */}
-        <Box sx={{ mt: 4 }}>
-          {/* Future components */}
-        </Box>
+        
       </Box>
     </Box>
   );

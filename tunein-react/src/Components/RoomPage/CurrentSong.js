@@ -4,6 +4,8 @@ import SkipNextIcon from '@mui/icons-material/SkipNext';
 import axios from 'axios';
 import io from 'socket.io-client';
 import MediaPlayer from './MediaPlayer';
+import SongWidget from './SongWidget';
+
 
 const CurrentSong = () => {
   const [currentSong, setCurrentSong] = useState(null);
@@ -30,22 +32,22 @@ const CurrentSong = () => {
     console.log('Setting up socket connection for room:', roomId);
     const newSocket = io(process.env.REACT_APP_SOCKET_URL);
 
-    
+
     // Join the room
     newSocket.emit('joinRoom', roomId);
-    
+
     // Listen for current song updates
     newSocket.on('currentSongUpdated', (data) => {
       setLoading(false);
       console.log('Received currentSongUpdated event:', data);
-      
+
       if (data.currentSong) {
         // Calculate time difference between server and client
         const serverTime = data.serverTime;
         const clientTime = Date.now();
         const diff = serverTime - clientTime;
         setServerTimeDiff(diff);
-        
+
         setCurrentSong(data.currentSong);
         // Clear countdown when a new song starts
         setCountdown(null);
@@ -59,18 +61,18 @@ const CurrentSong = () => {
       console.log('Received countdown event:', data);
       setCountdown(data.countdown);
       setNextSongInfo(data.nextSong);
-      
+
       // Clear any existing interval
       if (countdownRef.current) {
         clearInterval(countdownRef.current);
       }
-      
+
       // Set up countdown timer
       let secondsLeft = data.countdown;
       countdownRef.current = setInterval(() => {
         secondsLeft -= 1;
         setCountdown(secondsLeft);
-        
+
         if (secondsLeft <= 0) {
           clearInterval(countdownRef.current);
           countdownRef.current = null;
@@ -92,7 +94,7 @@ const CurrentSong = () => {
   // Fetch current song on initial load - auto-start
   useEffect(() => {
     if (!roomId) return;
-    
+
     const fetchCurrentSong = async () => {
       try {
         setLoading(true);
@@ -105,14 +107,14 @@ const CurrentSong = () => {
         });
 
         console.log('Current song response:', response.data);
-        
+
         if (response.data.currentSong) {
           // Calculate server-client time difference
           const serverTime = response.data.serverTime;
           const clientTime = Date.now();
           const diff = serverTime - clientTime;
           setServerTimeDiff(diff);
-          
+
           setCurrentSong(response.data.currentSong);
         }
         setLoading(false);
@@ -129,7 +131,7 @@ const CurrentSong = () => {
   // Calculate elapsed time since song started
   const getElapsedSeconds = () => {
     if (!currentSong || !currentSong.startTime) return 0;
-    
+
     // Use server-adjusted time
     const now = Date.now() + serverTimeDiff;
     return Math.floor((now - currentSong.startTime) / 1000);
@@ -153,19 +155,19 @@ const CurrentSong = () => {
   if (loading) {
     return (
       <Box sx={{ mb: 4 }}>
-        <Typography 
-          variant="h6" 
-          sx={{ 
-            color: 'white', 
+        <Typography
+          variant="h6"
+          sx={{
+            color: 'white',
             mb: 2,
-            fontWeight: 600 
+            fontWeight: 600
           }}
         >
           Now Playing
         </Typography>
-        <Box 
-          sx={{ 
-            p: 4, 
+        <Box
+          sx={{
+            p: 4,
             textAlign: 'center',
             bgcolor: 'rgba(0,0,0,0.2)',
             borderRadius: 2,
@@ -185,19 +187,19 @@ const CurrentSong = () => {
   return (
     <Box sx={{ mb: 4 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography 
-          variant="h6" 
-          sx={{ 
+        <Typography
+          variant="h6"
+          sx={{
             color: 'white',
-            fontWeight: 600 
+            fontWeight: 600
           }}
         >
           Now Playing
         </Typography>
-        
+
         {currentSong && (
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             size="small"
             startIcon={<SkipNextIcon />}
             onClick={handleSkipSong}
@@ -207,13 +209,18 @@ const CurrentSong = () => {
           </Button>
         )}
       </Box>
-      
+
       {error && (
         <Typography color="error" variant="caption" sx={{ display: 'block', mb: 1 }}>
           {error}
         </Typography>
       )}
-      
+
+      <SongWidget
+        currentSong={currentSong}
+        getElapsedSeconds={getElapsedSeconds}
+      />
+
       {countdown !== null && countdown > 0 && (
         <Box
           sx={{
@@ -234,15 +241,15 @@ const CurrentSong = () => {
           )}
         </Box>
       )}
-      
+
       {currentSong ? (
         <Paper sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.4)' }}>
-          <MediaPlayer 
-            videoId={currentSong.id} 
-            startTime={getElapsedSeconds()} 
+          <MediaPlayer
+            videoId={currentSong.id}
+            startTime={getElapsedSeconds()}
             songData={currentSong}
           />
-          
+
           <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 500 }}>
               {currentSong.title}
@@ -253,9 +260,9 @@ const CurrentSong = () => {
           </Box>
         </Paper>
       ) : (
-        <Box 
-          sx={{ 
-            p: 4, 
+        <Box
+          sx={{
+            p: 4,
             textAlign: 'center',
             bgcolor: 'rgba(0,0,0,0.2)',
             borderRadius: 2
