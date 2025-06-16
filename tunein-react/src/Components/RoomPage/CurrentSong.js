@@ -184,14 +184,34 @@ const CurrentSong = () => {
     );
   }
 
+  // Replace the main return statement with this updated version:
   return (
-    <Box sx={{ mb: 4 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+    <Box sx={{
+      mb: { xs: 2, md: 4 },  // Responsive bottom margin
+      width: '100%',
+      // ADDED: Ensure proper spacing and prevent overlap
+      minHeight: 'fit-content'
+    }}>
+
+      {/* Header section - UPDATED: Better responsive spacing */}
+      <Box sx={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        mb: { xs: 1.5, md: 2 },  // Responsive margin
+        // ADDED: Ensure header doesn't get too cramped on mobile
+        flexWrap: { xs: 'wrap', sm: 'nowrap' },
+        gap: 1
+      }}>
         <Typography
           variant="h6"
           sx={{
             color: 'white',
-            fontWeight: 600
+            fontWeight: 600,
+            fontSize: {
+              xs: '1.1rem',  // Smaller on mobile
+              md: '1.25rem'  // Normal on desktop
+            }
           }}
         >
           Now Playing
@@ -203,9 +223,16 @@ const CurrentSong = () => {
             size="small"
             startIcon={<SkipNextIcon />}
             onClick={handleSkipSong}
-            sx={{ bgcolor: 'rgba(29, 185, 84, 0.8)', '&:hover': { bgcolor: 'rgba(29, 185, 84, 1)' } }}
+            sx={{
+              bgcolor: 'rgba(29, 185, 84, 0.8)',
+              '&:hover': { bgcolor: 'rgba(29, 185, 84, 1)' },
+              minWidth: { xs: 'auto', sm: '80px' },  // Responsive button size
+              fontSize: { xs: '0.75rem', md: '0.875rem' }
+            }}
           >
-            Skip
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+              Skip
+            </Box>
           </Button>
         )}
       </Box>
@@ -216,62 +243,113 @@ const CurrentSong = () => {
         </Typography>
       )}
 
+      {/* SongWidget - no changes needed */}
       <SongWidget
         currentSong={currentSong}
         getElapsedSeconds={getElapsedSeconds}
       />
 
+      {/* Countdown section - UPDATED: Better responsive styling */}
       {countdown !== null && countdown > 0 && (
         <Box
           sx={{
-            p: 3,
+            p: { xs: 2, md: 3 },  // Responsive padding
             textAlign: 'center',
             bgcolor: 'rgba(29, 185, 84, 0.2)',
             borderRadius: 2,
             mb: 2
           }}
         >
-          <Typography variant="h6" sx={{ color: 'white' }}>
+          <Typography
+            variant="h6"
+            sx={{
+              color: 'white',
+              fontSize: { xs: '1rem', md: '1.25rem' }  // Responsive font size
+            }}
+          >
             Next song in {countdown}...
           </Typography>
           {nextSongInfo && (
-            <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)', mt: 1 }}>
+            <Typography
+              variant="body1"
+              sx={{
+                color: 'rgba(255,255,255,0.7)',
+                mt: 1,
+                fontSize: { xs: '0.875rem', md: '1rem' }  // Responsive font size
+              }}
+            >
               Coming up: {nextSongInfo.title}
             </Typography>
           )}
         </Box>
       )}
 
+      {/* Media Player section - UPDATED: Better responsive styling */}
       {currentSong ? (
-        <Paper sx={{ p: 2, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.4)' }}>
+        <Paper sx={{
+          p: { xs: 1.5, md: 2 },  // Responsive padding
+          borderRadius: 2,
+          bgcolor: 'rgba(0,0,0,0.4)',
+          // ADDED: Ensure proper spacing on all screen sizes
+          maxWidth: '100%',
+          overflow: 'hidden'
+        }}>
           <MediaPlayer
             videoId={currentSong.id}
             startTime={getElapsedSeconds()}
             songData={currentSong}
           />
 
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 500 }}>
+          <Box sx={{ mt: { xs: 1.5, md: 2 } }}>  {/* Responsive margin */}
+            <Typography
+              variant="subtitle1"
+              sx={{
+                color: 'white',
+                fontWeight: 500,
+                fontSize: { xs: '0.9rem', md: '1rem' },  // Responsive font size
+                lineHeight: 1.3
+              }}
+            >
               {currentSong.title}
             </Typography>
-            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'rgba(255,255,255,0.7)',
+                fontSize: { xs: '0.8rem', md: '0.875rem' }  // Responsive font size
+              }}
+            >
               Added by: {currentSong.addedby}
             </Typography>
           </Box>
         </Paper>
       ) : (
+        /* No song section - UPDATED: Better responsive styling */
         <Box
           sx={{
-            p: 4,
+            p: { xs: 3, md: 4 },  // Responsive padding
             textAlign: 'center',
             bgcolor: 'rgba(0,0,0,0.2)',
             borderRadius: 2
           }}
         >
-          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)' }}>
+          <Typography
+            variant="body1"
+            sx={{
+              color: 'rgba(255,255,255,0.7)',
+              fontSize: { xs: '0.9rem', md: '1rem' }  // Responsive font size
+            }}
+          >
             No song is currently playing.
           </Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', mt: 1 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'rgba(255,255,255,0.5)',
+              mt: 1,
+              fontSize: { xs: '0.8rem', md: '0.875rem' }  // Responsive font size
+            }}
+          >
             Add songs to the queue to get started!
           </Typography>
         </Box>

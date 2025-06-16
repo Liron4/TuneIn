@@ -46,7 +46,7 @@ const RoomPage = () => {
       <CircularProgress color="primary" />
     </Box>
   );
-  
+
   if (error) return (
     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'error.main' }}>
       <Typography variant="h6">{error}</Typography>
@@ -54,8 +54,8 @@ const RoomPage = () => {
   );
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
+    <Box sx={{
+      display: 'flex',
       height: '100vh',
       backgroundColor: '#121212',
       color: 'white',
@@ -63,45 +63,59 @@ const RoomPage = () => {
     }}>
       {/* Left Sidebar */}
       <LeftBar roomName={room?.name} />
-      
+
       {/* Main content area - responsive */}
-      <Box sx={{ 
+      <Box sx={{
         flexGrow: 1,
-        marginLeft: { 
-          xs: 0,      // No margin on mobile (sidebar will overlay)
-          md: '300px' // Desktop margin for sidebar
+        padding: {
+          xs: '15px 15px 15px 15px', // CHANGED: Reduced top padding from 60px to 15px
+          md: '20px'                 // Normal padding on desktop
         },
-        padding: { 
-          xs: '10px', // Smaller padding on mobile
-          md: '20px'  // Normal padding on desktop
-        },
-        overflow: 'hidden', // No scrollbar
+        overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh'
+        height: '100vh',
+        paddingLeft: {
+          xs: '60px',  // Leave space for menu button on mobile
+          md: '20px'   // Normal padding on desktop
+        }
       }}>
-        
-        {/* Current Song Section - aligned with LeftBar title */}
-        <Box sx={{ 
-          width: '100%', 
-          maxWidth: { 
-            xs: '100%',  // Full width on mobile
-            md: '800px'  // Max width on desktop
+
+        {/* Current Song Section - UPDATED: Align with menu icon */}
+        <Box sx={{
+          width: '100%',
+          maxWidth: {
+            xs: '100%',   // Full available width on mobile
+            sm: '600px',  // Medium screens
+            md: '700px',  // Desktop
+            lg: '800px'   // Large screens
           },
-          margin: '0 auto',
-          mt: { 
-            xs: 1,  // Minimal top margin on mobile
-            md: 2   // Normal margin on desktop
+          margin: '0 auto',   // Center horizontally
+          mt: {
+            xs: 0.5,  // CHANGED: Minimal top margin to align with menu icon (15px)
+            md: 1     // CHANGED: Reduced margin on desktop
           },
-          flex: '1 1 auto', // Take available space but allow shrinking
+          mb: {
+            xs: 2,  // Bottom margin on mobile
+            md: 4   // More bottom margin on laptop/desktop
+          },
+          flex: '1 1 auto',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden'
+          overflow: 'auto',
+          '&::-webkit-scrollbar': {
+            width: '6px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'rgba(255,255,255,0.1)',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: 'rgba(255,255,255,0.3)',
+            borderRadius: '3px',
+          },
         }}>
           <CurrentSong />
         </Box>
-        
-        
       </Box>
     </Box>
   );

@@ -10,50 +10,30 @@ const LeftBar = ({ roomName }) => {
 
   return (
     <>
-      {/* Fixed Toggle Button - responsive positioning */}
+      {/* Fixed Toggle Button - FIXED: Always visible, positioned correctly */}
       <IconButton
         onClick={() => setVisible(v => !v)}
         sx={{
           position: 'fixed',
-          left: { 
-            xs: '10px',                    // Always left on mobile
-            md: visible ? '270px' : '10px' // Responsive on desktop
-          },
-          top: '20px',
+          left: visible ? { 
+            xs: '240px',  // Top right of mobile sidebar
+            md: '260px'   // Top right of desktop sidebar
+          } : '10px',     // Left edge when closed
+          top: '15px',
           backgroundColor: 'rgba(33,33,33,0.97)',
           color: 'white',
-          zIndex: 1100,
+          zIndex: 1300,   // Higher z-index to stay above sidebar
           borderRadius: '50%',
-          boxShadow: 1,
-          transition: 'left 0.3s',
+          boxShadow: 2,
+          transition: 'left 0.3s ease-in-out',
+          '&:hover': {
+            backgroundColor: 'rgba(33,33,33,1)',
+          }
         }}
         size="small"
       >
         {visible ? <CloseIcon /> : <MenuIcon />}
       </IconButton>
-
-      {/* Room Name - responsive positioning */}
-      <Typography
-        variant="h6"
-        sx={{
-          position: 'fixed',
-          left: { 
-            xs: '60px',                     // Fixed position on mobile
-            md: visible ? '350px' : '60px'  // Responsive on desktop
-          },
-          top: '22px',
-          color: 'white',
-          zIndex: 1100,
-          fontWeight: 'bold',
-          transition: 'left 0.3s',
-          fontSize: { 
-            xs: '1rem',    // Smaller font on mobile
-            md: '1.25rem'  // Normal font on desktop
-          }
-        }}
-      >
-        {roomName}
-      </Typography>
 
       {/* Sidebar - responsive behavior */}
       <Box sx={{
@@ -62,27 +42,54 @@ const LeftBar = ({ roomName }) => {
         top: 0,
         bottom: 0,
         width: { 
-          xs: '280px', // Slightly smaller on mobile
-          md: '300px'  // Full width on desktop
+          xs: '280px', // Mobile width
+          md: '300px'  // Desktop width
         },
         backgroundColor: 'rgba(33, 33, 33, 0.97)',
         color: 'white',
         padding: { 
-          xs: '15px', // Less padding on mobile
-          md: '20px'  // Normal padding on desktop
+          xs: '15px',
+          md: '20px'
         },
         overflow: 'hidden',
-        boxShadow: '0px 0px 10px rgba(0, 0, 0, 0.5)',
+        boxShadow: '2px 0px 10px rgba(0, 0, 0, 0.5)',
         zIndex: { 
-          xs: 1200, // Higher z-index on mobile to overlay content
-          md: 1000  // Normal z-index on desktop
+          xs: 1200, // High z-index on mobile to overlay content
+          md: 1000   // Normal z-index on desktop
         },
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
-        transition: 'transform 0.3s',
+        transition: 'transform 0.3s ease-in-out',
         transform: visible ? 'translateX(0)' : 'translateX(-100%)',
       }}>
+        
+        {/* FIXED: Room Name Header - now inside the sidebar */}
+        <Box sx={{ 
+          width: '100%', 
+          pt: 0, 
+          pb: 2, 
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
+          mb: 2
+        }}>
+          <Typography
+            variant="h6"
+            sx={{
+              color: 'white',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              fontSize: { 
+                xs: '1rem',    // Smaller font on mobile
+                md: '1.25rem'  // Normal font on desktop
+              },
+              // Add some padding to avoid overlap with close button
+              pr: 4
+            }}
+          >
+            {roomName || 'Loading...'}
+          </Typography>
+        </Box>
+
         {/* Content */}
         <Box
           sx={{
@@ -90,22 +97,24 @@ const LeftBar = ({ roomName }) => {
             display: 'flex',
             flexDirection: 'column',
             gap: 2,
-            mt: 6, // Add margin to avoid overlap with button
-            height: 'calc(100% - 48px)', // Take remaining height
+            height: 'calc(100% - 80px)', // Account for header space
             overflow: 'hidden'
           }}
         >
           <Typography variant="h6" sx={{ 
-            mb: 2, 
+            mb: 1, 
             textAlign: 'center',
             fontSize: { 
-              xs: '1rem',    // Smaller on mobile
-              md: '1.25rem'  // Normal on desktop
-            }
+              xs: '0.9rem',   // Smaller on mobile
+              md: '1.1rem'    // Normal on desktop
+            },
+            color: 'rgba(255,255,255,0.8)'
           }}>
             Music Controls
           </Typography>
+          
           <SearchSong />
+          
           <Box sx={{ 
             mt: 2, 
             flexGrow: 1, 
@@ -117,10 +126,14 @@ const LeftBar = ({ roomName }) => {
             },
             '&::-webkit-scrollbar-track': {
               background: 'rgba(255,255,255,0.1)',
+              borderRadius: '3px',
             },
             '&::-webkit-scrollbar-thumb': {
               background: 'rgba(255,255,255,0.3)',
               borderRadius: '3px',
+              '&:hover': {
+                background: 'rgba(255,255,255,0.5)',
+              }
             },
           }}>
             <SongQueue />

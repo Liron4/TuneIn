@@ -18,15 +18,13 @@ const SongWidget = ({ currentSong, getElapsedSeconds }) => {
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
     const intervalRef = useRef(null);
+    const timeoutRef = useRef(null); // NEW: Track the setTimeout
 
-    // Format time in MM:SS format, with negative support
+    // Format time in MM:SS format
     const formatTime = (seconds) => {
-        const isNegative = seconds < 0;
-        const absSeconds = Math.abs(seconds);
-        const mins = Math.floor(absSeconds / 60);
-        const secs = Math.floor(absSeconds % 60);
-        const timeString = `${mins}:${secs.toString().padStart(2, '0')}`;
-        return isNegative ? `-${timeString}` : timeString;
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
     // Update progress and current time
@@ -36,55 +34,75 @@ const SongWidget = ({ currentSong, getElapsedSeconds }) => {
         const elapsed = getElapsedSeconds();
         const songDuration = currentSong.duration;
 
-        setCurrentTime(elapsed);
+        // Cap elapsed time at duration (no negative values)
+        const cappedElapsed = Math.min(Math.max(elapsed, 0), songDuration);
+
+        setCurrentTime(cappedElapsed);
         setDuration(songDuration);
 
-        // Calculate progress percentage (0-100), but cap at 100 even if song exceeds duration
-        const progressPercentage = Math.min((elapsed / songDuration) * 100, 100);
+        // Calculate progress percentage (0-100)
+        const progressPercentage = (cappedElapsed / songDuration) * 100;
         setProgress(progressPercentage);
-    };
 
-    // Initialize widget when currentSong changes
-    useEffect(() => {
-        if (!currentSong) {
-            // Clear everything when no song
-            setProgress(0);
-            setCurrentTime(0);
-            setDuration(0);
-
-            // Clear existing interval
+        // Stop the timer when song is finished
+        if (elapsed >= songDuration) {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
             }
-            return;
         }
+    };
 
-        // Clear any existing interval first
+    // Initialize widget when currentSong changes
+    useEffect(() => {
+        // FIXED: Clear both interval and timeout
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
         }
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
 
-        // NEW: Add 0.5 second delay before starting the timer
-        setTimeout(() => {
-            // Initial update after delay
+        if (!currentSong) {
+            // Reset everything when no song
+            setProgress(0);
+            setCurrentTime(0);
+            setDuration(0);
+            return;
+        }
+
+        // Reset state for new song
+        setProgress(0);
+        setCurrentTime(0);
+        setDuration(currentSong.duration || 0);
+
+        // FIXED: Store timeout reference for cleanup
+        timeoutRef.current = setTimeout(() => {
+            timeoutRef.current = null; // Clear reference once timeout fires
+            
+            // Initial update
             updateProgress();
 
-            // Set up interval to update progress every second
+            // Set up interval to update every second
             intervalRef.current = setInterval(() => {
                 updateProgress();
             }, 1000);
-        }, 300); // 0.3 second delay
+        }, 300);
 
-        // Cleanup interval when component unmounts or song changes
+        // FIXED: Cleanup both interval and timeout
         return () => {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
                 intervalRef.current = null;
             }
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
+            }
         };
-    }, [currentSong, getElapsedSeconds]);
+    }, [currentSong?.id]); // Only depend on song ID to ensure proper reset
 
     // Don't render if no current song
     if (!currentSong) {
@@ -105,7 +123,7 @@ const SongWidget = ({ currentSong, getElapsedSeconds }) => {
         >
             {/* Song Info */}
             <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-                {/* Thumbnail as separate image */}
+                {/* Thumbnail */}
                 {currentSong.thumbnail && (
                     <Box
                         component="img"
