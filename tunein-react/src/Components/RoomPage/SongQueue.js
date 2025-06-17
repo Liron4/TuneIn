@@ -6,15 +6,15 @@ import {
   CircularProgress
 } from '@mui/material';
 import axios from 'axios';
-import io from 'socket.io-client';
 import SongCard from './SongCard';
+import { useSocket } from './Context/SocketContext';
 
 const SongQueue = () => {
   const [queue, setQueue] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentUsername, setCurrentUsername] = useState('');
-  const [socket, setSocket] = useState(null);
+  const { newSocket, roomId } = useSocket();
 
   // Get current user's username
   useEffect(() => {
@@ -35,40 +35,37 @@ const SongQueue = () => {
     fetchCurrentUser();
   }, []);
 
-  // Setup Socket.IO connection for real-time updates
   useEffect(() => {
-    const pathParts = window.location.pathname.split('/');
-    const roomId = pathParts[pathParts.indexOf('room') + 1];
-    
-    if (!roomId) return;
+    if (!newSocket || !roomId) {
+      console.log('SongQueue: Waiting for socket connection...');
+      return;
+    }
 
-    const newSocket = io(process.env.REACT_APP_SOCKET_URL);
-    
-    // Join the room
-    newSocket.emit('joinRoom', roomId);
-    
+    console.log('SongQueue: Setting up queue listeners');
+
     // Listen for queue updates
     newSocket.on('queueUpdated', (data) => {
+      console.log('Received queue update:', data);
       setQueue(data.queue || []);
     });
 
-    setSocket(newSocket);
-
+    // Cleanup listener
     return () => {
-      newSocket.disconnect();
+      if (newSocket) {
+        newSocket.off('queueUpdated');
+      }
     };
-  }, []);
+  }, [newSocket, roomId]); // Dependencies: re-run when socket or roomId changes
+
+
 
   // Fetch queue data (initial load)
   const fetchQueue = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('authToken');
-      
-      const pathParts = window.location.pathname.split('/');
-      const roomId = pathParts[pathParts.indexOf('room') + 1];
-      
-      if (!roomId || !token) return;
+
+      if (!roomId || !token) return; // Use roomId from context
 
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/queue/${roomId}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -93,8 +90,6 @@ const SongQueue = () => {
   const handleRemoveSong = async (song, index) => {
     try {
       const token = localStorage.getItem('authToken');
-      const pathParts = window.location.pathname.split('/');
-      const roomId = pathParts[pathParts.indexOf('room') + 1];
 
       await axios.delete(`${process.env.REACT_APP_API_URL}/api/queue/${roomId}/${index}`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -124,63 +119,63 @@ const SongQueue = () => {
   }
 
   return (
-  <Box sx={{ width: '100%' }}>
-    <Typography 
-      variant="h6" 
-      sx={{ 
-        color: 'white', 
-        mb: 2,
-        fontWeight: 600 
-      }}
-    >
-      Song Queue ({queue.length})
-    </Typography>
-
-    {error && (
-      <Typography 
-        color="error" 
-        variant="caption" 
-        sx={{ mt: 1 }}
-      >
-        {error}
-      </Typography>
-    )}
-
-    {queue.length === 0 ? (
-      <Typography 
-        variant="body2" 
-        sx={{ 
-          color: 'rgba(255,255,255,0.6)',
-          textAlign: 'center',
-          py: 4
+    <Box sx={{ width: '100%' }}>
+      <Typography
+        variant="h6"
+        sx={{
+          color: 'white',
+          mb: 2,
+          fontWeight: 600
         }}
       >
-        No songs in queue. Add some songs to get started!
+        Song Queue ({queue.length})
       </Typography>
-    ) : (
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="subtitle2" sx={{ mb: 1, color: 'rgba(255,255,255,0.8)' }}>
-          Current Queue:
+
+      {error && (
+        <Typography
+          color="error"
+          variant="caption"
+          sx={{ mt: 1 }}
+        >
+          {error}
         </Typography>
-        <List sx={{ p: 0 }}>
-          {queue.map((song, index) => {
-            const canRemove = currentUsername === song.addedby;
-            
-            return (
-              <SongCard
-                key={`${song.id}-${index}`}
-                song={formatSongForQueue(song)}
-                context={canRemove ? 'queue' : 'display'}
-                onAction={canRemove ? (s) => handleRemoveSong(s, index) : null}
-                disabled={false}
-              />
-            );
-          })}
-        </List>
-      </Box>
-    )}
-  </Box>
-);
+      )}
+
+      {queue.length === 0 ? (
+        <Typography
+          variant="body2"
+          sx={{
+            color: 'rgba(255,255,255,0.6)',
+            textAlign: 'center',
+            py: 4
+          }}
+        >
+          No songs in queue. Add some songs to get started!
+        </Typography>
+      ) : (
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="subtitle2" sx={{ mb: 1, color: 'rgba(255,255,255,0.8)' }}>
+            Current Queue:
+          </Typography>
+          <List sx={{ p: 0 }}>
+            {queue.map((song, index) => {
+              const canRemove = currentUsername === song.addedby;
+
+              return (
+                <SongCard
+                  key={`${song.id}-${index}`}
+                  song={formatSongForQueue(song)}
+                  context={canRemove ? 'queue' : 'display'}
+                  onAction={canRemove ? (s) => handleRemoveSong(s, index) : null}
+                  disabled={false}
+                />
+              );
+            })}
+          </List>
+        </Box>
+      )}
+    </Box>
+  );
 };
 
 export default SongQueue;

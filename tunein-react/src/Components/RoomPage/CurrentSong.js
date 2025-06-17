@@ -2,39 +2,28 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, Typography, Paper, Button } from '@mui/material';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import axios from 'axios';
-import io from 'socket.io-client';
 import MediaPlayer from './MediaPlayer';
 import SongWidget from './SongWidget';
+import { useSocket } from './Context/SocketContext';
 
 
 const CurrentSong = () => {
   const [currentSong, setCurrentSong] = useState(null);
-  const [socket, setSocket] = useState(null);
-  const [roomId, setRoomId] = useState(null);
   const [serverTimeDiff, setServerTimeDiff] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [countdown, setCountdown] = useState(null);
   const [nextSongInfo, setNextSongInfo] = useState(null);
   const countdownRef = useRef(null);
+  const { newSocket, roomId, isConnected } = useSocket();
 
-  // Extract room ID from URL
   useEffect(() => {
-    const pathParts = window.location.pathname.split('/');
-    const id = pathParts[pathParts.indexOf('room') + 1];
-    setRoomId(id);
-  }, []);
+    if (!newSocket || !roomId) {
+      console.log('CurrentSong: Waiting for socket connection...');
+      return;
+    }
 
-  // Setup Socket.IO connection
-  useEffect(() => {
-    if (!roomId) return;
-
-    console.log('Setting up socket connection for room:', roomId);
-    const newSocket = io(process.env.REACT_APP_SOCKET_URL);
-
-
-    // Join the room
-    newSocket.emit('joinRoom', roomId);
+    console.log('CurrentSong: Setting up socket listeners');
 
     // Listen for current song updates
     newSocket.on('currentSongUpdated', (data) => {
@@ -42,14 +31,12 @@ const CurrentSong = () => {
       console.log('Received currentSongUpdated event:', data);
 
       if (data.currentSong) {
-        // Calculate time difference between server and client
         const serverTime = data.serverTime;
         const clientTime = Date.now();
         const diff = serverTime - clientTime;
         setServerTimeDiff(diff);
 
         setCurrentSong(data.currentSong);
-        // Clear countdown when a new song starts
         setCountdown(null);
       } else {
         setCurrentSong(null);
@@ -62,12 +49,10 @@ const CurrentSong = () => {
       setCountdown(data.countdown);
       setNextSongInfo(data.nextSong);
 
-      // Clear any existing interval
       if (countdownRef.current) {
         clearInterval(countdownRef.current);
       }
 
-      // Set up countdown timer
       let secondsLeft = data.countdown;
       countdownRef.current = setInterval(() => {
         secondsLeft -= 1;
@@ -80,16 +65,17 @@ const CurrentSong = () => {
       }, 1000);
     });
 
-    setSocket(newSocket);
-
+    // Cleanup listeners
     return () => {
-      console.log('Disconnecting socket');
-      newSocket.disconnect();
+      if (newSocket) {
+        newSocket.off('currentSongUpdated');
+        newSocket.off('nextSongCountdown');
+      }
       if (countdownRef.current) {
         clearInterval(countdownRef.current);
       }
     };
-  }, [roomId]);
+  }, [newSocket, roomId]); // Dependencies: re-run when socket or roomId changes
 
   // Fetch current song on initial load - auto-start
   useEffect(() => {
@@ -184,7 +170,6 @@ const CurrentSong = () => {
     );
   }
 
-  // Replace the main return statement with this updated version:
   return (
     <Box sx={{
       mb: { xs: 2, md: 4 },  // Responsive bottom margin

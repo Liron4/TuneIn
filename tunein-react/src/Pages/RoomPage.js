@@ -5,12 +5,18 @@ import axios from 'axios';
 import LeftBar from '../Components/RoomPage/LeftBar';
 import { useNavigate } from 'react-router-dom';
 import CurrentSong from '../Components/RoomPage/CurrentSong';
+import RightBar from '../Components/RoomPage/RightBar';
+import { SocketProvider } from '../Components/RoomPage/Context/SocketContext';
+import io from 'socket.io-client';
+
+
 
 const RoomPage = () => {
   const { roomId } = useParams();
   const [room, setRoom] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [roomSocket, setRoomSocket] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -41,6 +47,46 @@ const RoomPage = () => {
     }
   }, [roomId, navigate]);
 
+    // Create socket when RoomPage mounts
+  useEffect(() => {
+    if (!roomId) {
+      console.error('No roomId provided for socket connection');
+      return;
+    }
+
+    console.log('RoomPage: Creating socket connection for room:', roomId);
+    
+    const token = localStorage.getItem('authToken');
+    const newSocket = io(process.env.REACT_APP_API_URL, {
+      auth: { token },
+      transports: ['websocket']
+    });
+
+    // Socket connection events
+    newSocket.on('connect', () => {
+      console.log('RoomPage socket connected successfully');
+      newSocket.emit('joinRoom', roomId);
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('RoomPage socket disconnected');
+    });
+
+    newSocket.on('connect_error', (error) => {
+      console.error('RoomPage socket connection error:', error);
+    });
+
+    // Set socket state to provide to context
+    setRoomSocket(newSocket);
+
+    // CLEANUP: Destroy socket when RoomPage unmounts or roomId changes
+    return () => {
+      console.log('RoomPage: Cleaning up socket connection');
+      newSocket.disconnect();
+      setRoomSocket(null);
+    };
+  }, [roomId]);
+
   if (loading) return (
     <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
       <CircularProgress color="primary" />
@@ -54,6 +100,7 @@ const RoomPage = () => {
   );
 
   return (
+    <SocketProvider newSocket={roomSocket} roomId={roomId}>
     <Box sx={{
       display: 'flex',
       height: '100vh',
@@ -64,21 +111,20 @@ const RoomPage = () => {
       {/* Left Sidebar */}
       <LeftBar roomName={room?.name} />
 
+      {/* Right Sidebar */}
+      <RightBar roomId={roomId} />
+
       {/* Main content area - responsive */}
       <Box sx={{
         flexGrow: 1,
         padding: {
-          xs: '15px 15px 15px 15px', // CHANGED: Reduced top padding from 60px to 15px
+          xs: '15px 60px 15px 60px', // UPDATED: Space for both left AND right menu buttons
           md: '20px'                 // Normal padding on desktop
         },
         overflow: 'hidden',
         display: 'flex',
         flexDirection: 'column',
         height: '100vh',
-        paddingLeft: {
-          xs: '60px',  // Leave space for menu button on mobile
-          md: '20px'   // Normal padding on desktop
-        }
       }}>
 
         {/* Current Song Section - UPDATED: Align with menu icon */}
@@ -118,6 +164,7 @@ const RoomPage = () => {
         </Box>
       </Box>
     </Box>
+    </SocketProvider>
   );
 };
 

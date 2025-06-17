@@ -43,3 +43,6 @@ backend/.env*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# dev notes
+devnotes.md

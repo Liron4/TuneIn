@@ -12,7 +12,7 @@ const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
     const initializePlayer = useCallback(() => {
         // Prevent double initialization
         if (initializationRef.current || !videoId) return;
-        
+
         if (!window.YT || !window.YT.Player) {
             console.log('YouTube API not ready yet');
             return; // The API onReady callback will handle initialization
@@ -29,7 +29,7 @@ const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
                     videoId: videoId,
                     startSeconds: startTime
                 });
-                
+
                 // Ensure player is ready and playing
                 youtubePlayerRef.current.playVideo();
                 setPlayerReady(true);
@@ -62,7 +62,7 @@ const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
                         try {
                             event.target.unMute();
                             event.target.playVideo();
-                            
+
                             if (startTime > 0) {
                                 event.target.seekTo(startTime);
                             }
@@ -85,6 +85,42 @@ const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
             initializationRef.current = false; // Reset flag to allow retry
         }
     }, [videoId, startTime]);
+
+    // ADDED: Global function to get current time from any component
+    useEffect(() => {
+        // Expose getCurrentTime function globally for ChatPanel access
+        window.getYouTubePlayerCurrentTime = () => {
+            if (youtubePlayerRef.current && playerReady) {
+                try {
+                    return youtubePlayerRef.current.getCurrentTime();
+                } catch (error) {
+                    console.error('Error getting current time:', error);
+                    return null;
+                }
+            }
+            return null;
+        };
+
+        // ADDED: Expose setCurrentTime function globally
+        window.setYouTubePlayerCurrentTime = (time) => {
+            if (youtubePlayerRef.current && playerReady) {
+                try {
+                    youtubePlayerRef.current.seekTo(time, true);
+                    return true;
+                } catch (error) {
+                    console.error('Error setting current time:', error);
+                    return false;
+                }
+            }
+            return false;
+        };
+
+        // Cleanup on unmount
+        return () => {
+            window.getYouTubePlayerCurrentTime = null;
+            window.setYouTubePlayerCurrentTime = null;
+        };
+    }, [playerReady]);
 
     // Load YouTube API
     useEffect(() => {

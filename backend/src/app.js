@@ -11,6 +11,8 @@ const roomRoutes = require('./routes/roomBrowserRoutes');
 const searchSongRoute = require('./routes/insideRoom/searchSongRoute');
 const queueRoutes = require('./routes/insideRoom/queueRoutes');
 const currentSongRoutes = require('./routes/insideRoom/CurrentSongRoute');
+const chatRoutes = require('./routes/insideRoom/ChatRoute');
+
 
 const app = express();
 app.use(cors({
@@ -25,6 +27,7 @@ app.use('/api/rooms', roomRoutes);
 app.use('/api/youtube', searchSongRoute);
 app.use('/api/queue', queueRoutes);
 app.use('/api/song', currentSongRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.get('/api/server-info', (req, res) => {
   res.json({

@@ -89,7 +89,7 @@ const SongWidget = ({ currentSong, getElapsedSeconds }) => {
             intervalRef.current = setInterval(() => {
                 updateProgress();
             }, 1000);
-        }, 300);
+        }, 500);
 
         // FIXED: Cleanup both interval and timeout
         return () => {
