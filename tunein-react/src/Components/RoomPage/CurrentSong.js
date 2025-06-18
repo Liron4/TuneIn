@@ -234,6 +234,8 @@ const CurrentSong = () => {
         getElapsedSeconds={getElapsedSeconds}
       />
 
+
+
       {/* Countdown section - UPDATED: Better responsive styling */}
       {countdown !== null && countdown > 0 && (
         <Box

@@ -3,7 +3,7 @@ import ChatIcon from '@mui/icons-material/Chat';
 import CloseIcon from '@mui/icons-material/Close';
 import { useState } from 'react';
 import ChatPanel from './ChatPanel/ChatPanel';
-import VotingWidget from './VotingWidget';
+import VotingWidget from './VoteWidget/VotingWidget';
 
 const RightBar = ({ roomId }) => {
   const [visible, setVisible] = useState(false); // Start hidden on mobile
@@ -15,7 +15,7 @@ const RightBar = ({ roomId }) => {
         onClick={() => setVisible(v => !v)}
         sx={{
           position: 'fixed',
-          right: visible ? { 
+          right: visible ? {
             xs: '280px',  // Top left of mobile sidebar when open
             md: '300px'   // Top left of desktop sidebar when open
           } : '10px',     // Right edge when closed
@@ -41,19 +41,19 @@ const RightBar = ({ roomId }) => {
         right: 0,
         top: 0,
         bottom: 0,
-        width: { 
+        width: {
           xs: '280px', // Mobile width
           md: '300px'  // Desktop width
         },
         backgroundColor: 'rgba(33, 33, 33, 0.97)',
         color: 'white',
-        padding: { 
+        padding: {
           xs: '15px',
           md: '20px'
         },
         overflow: 'hidden',
         boxShadow: '-2px 0px 10px rgba(0, 0, 0, 0.5)', // Left shadow instead of right
-        zIndex: { 
+        zIndex: {
           xs: 1200, // High z-index on mobile to overlay content
           md: 1000   // Normal z-index on desktop
         },
@@ -63,12 +63,12 @@ const RightBar = ({ roomId }) => {
         transition: 'transform 0.3s ease-in-out',
         transform: visible ? 'translateX(0)' : 'translateX(100%)', // Slide from right
       }}>
-        
+
         {/* Header */}
-        <Box sx={{ 
-          width: '100%', 
-          pt: 0, 
-          pb: 2, 
+        <Box sx={{
+          width: '100%',
+          pt: 0,
+          pb: 2,
           borderBottom: '1px solid rgba(255,255,255,0.1)',
           mb: 2
         }}>
@@ -78,7 +78,7 @@ const RightBar = ({ roomId }) => {
               color: 'white',
               fontWeight: 'bold',
               textAlign: 'center',
-              fontSize: { 
+              fontSize: {
                 xs: '1rem',    // Smaller font on mobile
                 md: '1.25rem'  // Normal font on desktop
               },
@@ -102,15 +102,10 @@ const RightBar = ({ roomId }) => {
           }}
         >
           {/* Voting Widget */}
-          <Box sx={{ 
-            flex: '0 0 200px',
-            width: '100%'
-          }}>
-            <VotingWidget />
-          </Box>
-          
+          <VotingWidget />
+
           {/* Chat Panel */}
-          <Box sx={{ 
+          <Box sx={{
             flex: '1 1 auto',
             minHeight: 0,
             width: '100%',

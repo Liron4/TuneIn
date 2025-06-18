@@ -122,6 +122,26 @@ const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
         };
     }, [playerReady]);
 
+    useEffect(() => {
+        // Expose song data globally for VoteWidget access
+        window.getCurrentSongData = () => {
+            return songData; // The songData prop passed to MediaPlayer
+        };
+
+        console.log('MediaPlayer: Exposed getCurrentSongData globally', songData);
+    }, [songData]);
+
+    // Cleanup when MediaPlayer unmounts
+    useEffect(() => {
+        return () => {
+            // Clean up global function when MediaPlayer is destroyed
+            if (window.getCurrentSongData) {
+                window.getCurrentSongData = null;
+                console.log('MediaPlayer: Cleaned up getCurrentSongData');
+            }
+        };
+    }, []);
+
     // Load YouTube API
     useEffect(() => {
         if (window.YT) {

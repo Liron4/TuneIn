@@ -27,6 +27,40 @@ exports.getProfile = async (req, res) => {
   }
 };
 
+// Update user points
+exports.updatePoints = async (req, res) => {
+  try {
+    const { points } = req.body;
+    const userId = req.user.userId;
+
+    // Validate points
+    if (typeof points !== 'number' || !Number.isInteger(points) || points < 0) {
+      return res.status(400).json({ message: 'Points must be a non-negative integer' });
+    }
+
+    // Update the user's points
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { points },
+      { new: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      nickname: updatedUser.nickname,
+      profilePic: updatedUser.profilePic,
+      genres: updatedUser.genres,
+      points: updatedUser.points
+    });
+  } catch (err) {
+    console.error('Points update error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Update user genres
 exports.updateGenres = async (req, res) => {
   try {

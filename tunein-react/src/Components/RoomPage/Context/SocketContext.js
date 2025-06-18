@@ -25,6 +25,7 @@ export const SocketProvider = ({ children, newSocket, roomId }) => {
 
     newSocket.on('connect', handleConnect);
     newSocket.on('disconnect', handleDisconnect);
+    
 
     // Set initial state
     setIsConnected(newSocket.connected);
