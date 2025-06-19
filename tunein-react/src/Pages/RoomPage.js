@@ -156,12 +156,12 @@ const RoomPage = () => {
               lg: 'row',       // Laptops: Side by side
               xl: 'row'        // Desktops: Side by side
             },
-            gap: {
-              xs: 0.5,   // 4px gap on mobile (unchanged)
-              sm: 0.75,  // 6px gap on small devices (unchanged)
-              md: 1,     // 8px gap on medium devices (unchanged)
-              lg: 3,     // 24px gap on large devices (increased from 2)
-              xl: 4      // 32px gap on XL screens (increased from 3)
+            gap: { // Gap between components
+              xs: 0.5,   
+              sm: 0.75,  
+              md: 1,    
+              lg: 4,     
+              xl: 5      
             },
             overflow: 'hidden',
             boxSizing: 'border-box',

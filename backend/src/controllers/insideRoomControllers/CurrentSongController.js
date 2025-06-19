@@ -1,4 +1,6 @@
 const Room = require('../../models/Room');
+const LiveViewersController = require('./ViewersControllers/LiveViewersController');
+
 
 let roomsInCountdown = new Set();
 
@@ -124,6 +126,7 @@ exports.skipSong = async (req, res) => {
     const io = req.app.get('socketio');
 
     // Play next song
+    LiveViewersController.clearRoomSkipVotes(roomId);
     await exports.playNextSong(roomId, io);
 
     return res.status(200).json({ message: 'Song skipped successfully' });

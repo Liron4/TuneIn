@@ -12,6 +12,7 @@ const searchSongRoute = require('./routes/insideRoom/searchSongRoute');
 const queueRoutes = require('./routes/insideRoom/queueRoutes');
 const currentSongRoutes = require('./routes/insideRoom/CurrentSongRoute');
 const chatRoutes = require('./routes/insideRoom/ChatRoute');
+const liveViewersRoutes = require('./routes/insideRoom/LiveViewersRoutes');
 
 
 const app = express();
@@ -28,6 +29,7 @@ app.use('/api/youtube', searchSongRoute);
 app.use('/api/queue', queueRoutes);
 app.use('/api/song', currentSongRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/live-viewers', liveViewersRoutes);
 
 app.get('/api/server-info', (req, res) => {
   res.json({
