@@ -2,11 +2,11 @@ const SkipVotingService = require('./SkipVotingService');
 const ViewerTrackingService = require('./ViewerTrackingService');
 
 class LiveViewersController {
-  // Get live viewers for ALL users (including creators)
+  // **CRITICAL FIX**: Change req.user.id to req.user.userId
   static async getLiveViewers(req, res) {
     try {
       const { roomId } = req.params;
-      const userId = req.user.id;
+      const userId = req.user.userId; // <-- CHANGED FROM req.user.id
       const io = req.app.get('socketio');
 
       console.log(`[GET LIVE VIEWERS] User ${userId} requesting data for room ${roomId}`);
@@ -40,11 +40,11 @@ class LiveViewersController {
     }
   }
 
-  // **FIXED**: Use toggle instead of add-only
+  // **CRITICAL FIX**: Change req.user.id to req.user.userId
   static async handleSkipVote(req, res) {
     try {
       const { roomId } = req.params;
-      const userId = req.user.id;
+      const userId = req.user.userId; // <-- CHANGED FROM req.user.id
       const io = req.app.get('socketio');
 
       console.log(`[VOTE REQUEST] User ${userId} in room ${roomId}`);
@@ -52,7 +52,7 @@ class LiveViewersController {
       // Get live viewers and update capacity
       const liveViewers = await ViewerTrackingService.getAndUpdateLiveViewers(roomId, io);
 
-      // **FIX**: Use toggleUserVote for proper toggle functionality
+      // Use toggleUserVote for proper toggle functionality
       const { action, skipCount } = SkipVotingService.toggleUserVote(roomId, userId);
       const threshold = SkipVotingService.calculateThreshold(liveViewers);
 

@@ -13,6 +13,7 @@ const queueRoutes = require('./routes/insideRoom/queueRoutes');
 const currentSongRoutes = require('./routes/insideRoom/CurrentSongRoute');
 const chatRoutes = require('./routes/insideRoom/ChatRoute');
 const liveViewersRoutes = require('./routes/insideRoom/LiveViewersRoutes');
+const SocketHandler = require('./controllers/insideRoomControllers/VotingSystem/SocketHandler');
 
 
 const app = express();
@@ -51,6 +52,11 @@ const io = socketIo(server, {
 
 // Make io accessible to other files
 app.set('socketio', io);
+
+
+// SOCKET HANDLER FOR VOTING VIEWERS SYSTEM
+SocketHandler.setupSocketHandlers(io);
+
 
 // Socket.IO connection handling
 io.on('connection', (socket) => {

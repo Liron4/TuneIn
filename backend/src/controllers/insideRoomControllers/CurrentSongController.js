@@ -1,5 +1,5 @@
 const Room = require('../../models/Room');
-const LiveViewersController = require('./ViewersControllers/LiveViewersController');
+const LiveViewersController = require('./VotingSystem/LiveViewersController');
 
 
 let roomsInCountdown = new Set();
@@ -32,6 +32,9 @@ const SONG_TRANSITION_DELAY = 5000; // 5 seconds delay before playing the next s
 
 exports.playNextSong = async (roomId, io) => {
   try {
+    // Clear last votes because we start a new song
+    LiveViewersController.clearRoomSkipVotes(roomId);
+  
     const room = await Room.findById(roomId);
 
     if (!room || room.songqueue.length === 0) {
@@ -126,7 +129,6 @@ exports.skipSong = async (req, res) => {
     const io = req.app.get('socketio');
 
     // Play next song
-    LiveViewersController.clearRoomSkipVotes(roomId);
     await exports.playNextSong(roomId, io);
 
     return res.status(200).json({ message: 'Song skipped successfully' });

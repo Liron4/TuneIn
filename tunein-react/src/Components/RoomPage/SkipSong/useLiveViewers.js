@@ -13,7 +13,7 @@ export const useLiveViewers = (roomId, isCreator) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // **FIX**: Always get initial data (creators need it too)
+  // Get initial data for all users (creators and regular users)
   useEffect(() => {
     const getInitialData = async () => {
       if (!roomId) return;
@@ -25,22 +25,23 @@ export const useLiveViewers = (roomId, isCreator) => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
         setSkipData(response.data);
-        console.log('[INITIAL DATA]', response.data);
+        setError(''); // Clear any previous errors
+        console.log('[HOOK] Initial data loaded:', response.data);
       } catch (err) {
-        console.error('Error getting initial skip data:', err);
+        console.error('[HOOK] Error getting initial skip data:', err);
         setError('Failed to load skip data');
       }
     };
 
     getInitialData();
-  }, [roomId]); // Removed isCreator dependency
+  }, [roomId]);
 
-  // **ENHANCED**: Socket listeners for all users
+  // Socket listeners for real-time updates
   useEffect(() => {
     if (!newSocket) return;
 
     const handleSkipVoteUpdate = (data) => {
-      console.log('[SOCKET] Skip vote update received:', data);
+      console.log('[HOOK] Skip vote update received:', data);
       setSkipData(prev => ({
         ...prev,
         liveViewers: data.liveViewers,
@@ -50,15 +51,28 @@ export const useLiveViewers = (roomId, isCreator) => {
     };
 
     const handleViewerCountUpdate = (data) => {
-      console.log('[SOCKET] Viewer count update:', data);
+      console.log('[HOOK] Viewer count update:', data);
       setSkipData(prev => ({
         ...prev,
-        liveViewers: data.liveViewers
+        liveViewers: data.liveViewers,
+        // Recalculate threshold when viewer count changes
+        threshold: data.liveViewers <= 1 ? 1 : 
+                   data.liveViewers === 2 ? 2 : 
+                   Math.floor(data.liveViewers / 2) + (data.liveViewers % 2 === 1 ? 1 : 0)
       }));
     };
 
     const handleSongSkippedByVote = (data) => {
-      console.log('[SOCKET] Song skipped by vote:', data);
+      console.log('[HOOK] Song skipped by vote:', data);
+      setSkipData(prev => ({
+        ...prev,
+        skipCount: 0,
+        hasUserVoted: false
+      }));
+    };
+
+    const handleSongChanged = () => {
+      console.log('[HOOK] Song changed - resetting vote state');
       setSkipData(prev => ({
         ...prev,
         skipCount: 0,
@@ -69,15 +83,17 @@ export const useLiveViewers = (roomId, isCreator) => {
     newSocket.on('skipVoteUpdate', handleSkipVoteUpdate);
     newSocket.on('viewerCountUpdate', handleViewerCountUpdate);
     newSocket.on('songSkippedByVote', handleSongSkippedByVote);
+    newSocket.on('songChanged', handleSongChanged);
 
     return () => {
       newSocket.off('skipVoteUpdate', handleSkipVoteUpdate);
       newSocket.off('viewerCountUpdate', handleViewerCountUpdate);
       newSocket.off('songSkippedByVote', handleSongSkippedByVote);
+      newSocket.off('songChanged', handleSongChanged);
     };
-  }, [newSocket]); // Removed isCreator dependency
+  }, [newSocket]);
 
-  // Submit skip vote (only for non-creators)
+  // Submit skip vote
   const submitSkipVote = async () => {
     if (loading) return false;
     
@@ -92,16 +108,13 @@ export const useLiveViewers = (roomId, isCreator) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       
+      // Update local state immediately with server response
       setSkipData(response.data);
-      console.log(`[VOTE SUBMITTED] ${response.data.action}:`, response.data);
-      
-      if (response.data.action === 'already_voted') {
-        setError('You have already voted to skip this song');
-      }
+      console.log('[HOOK] Vote submitted:', response.data);
       
       return true;
     } catch (err) {
-      console.error('Error submitting skip vote:', err);
+      console.error('[HOOK] Error submitting skip vote:', err);
       setError('Failed to process skip vote');
       return false;
     } finally {

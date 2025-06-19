@@ -10,7 +10,7 @@ const SkipVoteDisplay = ({ skipData, showCreatorMode = false }) => {
     return (
         <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: 2 }}>
             {/* Vote Status Chips */}
-            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
                 {showCreatorMode && (
                     <Chip
                         icon={<AdminPanelSettingsIcon />}
@@ -50,10 +50,10 @@ const SkipVoteDisplay = ({ skipData, showCreatorMode = false }) => {
                     }}
                 />
             </Box>
-
+    
             {/* Progress Bar */}
             {threshold > 0 && (
-                <Box sx={{ minWidth: 120 }}>
+                <Box sx={{ minWidth: 150, ml: 2 }}>
                     <Typography 
                         variant="caption" 
                         color="white" 
@@ -73,7 +73,7 @@ const SkipVoteDisplay = ({ skipData, showCreatorMode = false }) => {
                         overflow: 'hidden'
                     }}>
                         <Box sx={{
-                            width: `${Math.min((skipCount / threshold) * 100, 100)}%`,
+                            width: `${Math.min((skipCount / Math.max(threshold, 1)) * 100, 100)}%`,
                             height: '100%',
                             bgcolor: showCreatorMode 
                                 ? '#4caf50'  // Green for creator view
