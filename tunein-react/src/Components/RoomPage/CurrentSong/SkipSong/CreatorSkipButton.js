@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Button, CircularProgress } from '@mui/material';
 import SkipNextIcon from '@mui/icons-material/SkipNext';
 import axios from 'axios';
-import { useSocket } from '../Context/SocketContext';
+import { useSocket } from '../../Context/SocketContext';
 
 const CreatorSkipButton = ({ onSkip }) => {
   const { roomId } = useSocket();

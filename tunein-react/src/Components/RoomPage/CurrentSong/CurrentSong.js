@@ -4,7 +4,7 @@ import SkipNextIcon from '@mui/icons-material/SkipNext';
 import axios from 'axios';
 import MediaPlayer from './MediaPlayer';
 import SongWidget from './SongWidget';
-import { useSocket } from './Context/SocketContext';
+import { useSocket } from '../Context/SocketContext';
 import SkipSong from './SkipSong/SkipSong';
 
 

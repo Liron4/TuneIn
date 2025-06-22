@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useSocket } from '../Context/SocketContext';
+import { useSocket } from '../../Context/SocketContext';
 
 export const useLiveViewers = (roomId, isCreator) => {
   const { newSocket } = useSocket();
@@ -58,7 +58,7 @@ export const useLiveViewers = (roomId, isCreator) => {
         // Recalculate threshold when viewer count changes
         threshold: data.liveViewers <= 1 ? 1 : 
                    data.liveViewers === 2 ? 2 : 
-                   Math.floor(data.liveViewers / 2) + (data.liveViewers % 2 === 1 ? 1 : 0)
+                   Math.floor(data.liveViewers / 2) + 1
       }));
     };
 

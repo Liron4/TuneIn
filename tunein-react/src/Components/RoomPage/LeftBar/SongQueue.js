@@ -7,7 +7,7 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import SongCard from './SongCard';
-import { useSocket } from './Context/SocketContext';
+import { useSocket } from '../Context/SocketContext';
 
 const SongQueue = () => {
   const [queue, setQueue] = useState([]);

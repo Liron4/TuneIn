@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
 import axios from 'axios';
-import { useSocket } from '../Context/SocketContext';
+import { useSocket } from '../../Context/SocketContext';
 import { useLiveViewers } from './useLiveViewers';
 import CreatorSkipButton from './CreatorSkipButton';
 import VoteSkipButton from './VoteSkipButton';
