@@ -1,37 +1,87 @@
-import React from 'react';
-import { Button, CircularProgress, Alert } from '@mui/material';
+import React, { useState } from 'react';
+import { Button, CircularProgress, Alert, useMediaQuery, useTheme } from '@mui/material';
 import HowToVoteIcon from '@mui/icons-material/HowToVote';
+import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 
 const VoteSkipButton = ({ skipData, loading, error, onVote }) => {
-  const { hasUserVoted } = skipData;
+  const [isVoting, setIsVoting] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('lg')); // Mobile + Tablet
+  
+  const hasVoted = skipData?.hasUserVoted || false;
+  const isDisabled = loading || isVoting || !skipData;
+
+  const handleVote = async () => {
+    if (isDisabled) return;
+    
+    setIsVoting(true);
+    try {
+      await onVote();
+    } catch (err) {
+      console.error('Vote error:', err);
+    } finally {
+      setIsVoting(false);
+    }
+  };
 
   return (
     <>
       <Button
-        variant={hasUserVoted ? "outlined" : "contained"}
-        color={hasUserVoted ? "warning" : "secondary"}
-        startIcon={loading ? <CircularProgress size={20} /> : <HowToVoteIcon />}
-        onClick={onVote}
-        disabled={loading}
+        variant={hasVoted ? "outlined" : "contained"}
+        color={hasVoted ? "warning" : "secondary"}
+        startIcon={
+          !isMobile && (
+            isVoting ? <CircularProgress size={16} /> : hasVoted ? <RemoveCircleOutlineIcon /> : <HowToVoteIcon />
+          )
+        }
+        onClick={handleVote}
+        disabled={isDisabled}
+        size="small"
         sx={{
-          bgcolor: hasUserVoted ? 'transparent' : '#ff9800',
-          borderColor: hasUserVoted ? '#ff9800' : 'transparent',
+          bgcolor: hasVoted ? 'transparent' : '#ff9800',
+          borderColor: hasVoted ? '#ff9800' : 'transparent',
+          color: hasVoted ? '#ff9800' : 'white',
           '&:hover': { 
-            bgcolor: hasUserVoted ? 'rgba(255, 152, 0, 0.1)' : '#f57c00' 
+            bgcolor: hasVoted ? 'rgba(255, 152, 0, 0.1)' : '#f57c00',
+            borderColor: hasVoted ? '#ff9800' : 'transparent'
           },
-          minWidth: '120px'
+          '&:disabled': {
+            borderColor: 'rgba(255,255,255,0.1)',
+            backgroundColor: 'rgba(255,255,255,0.02)',
+            color: 'rgba(255,255,255,0.3)',
+          },
+          textTransform: 'none',
+          minWidth: isMobile ? '36px' : '120px',
+          height: '36px',
+          // Mobile/Tablet: Show only icon, no text, no startIcon
+          ...(isMobile && {
+            padding: '6px',
+            '& .MuiButton-startIcon': {
+              display: 'none' // Hide startIcon on mobile
+            }
+          })
         }}
       >
-        {loading 
-          ? 'Processing...' 
-          : hasUserVoted 
-            ? 'Remove Vote' 
-            : 'Vote to Skip'
-        }
+        {isMobile ? (
+          isVoting ? (
+            <CircularProgress size={16} sx={{ color: 'inherit' }} />
+          ) : hasVoted ? (
+            '✖' // X symbol for remove vote
+          ) : (
+            '⏭' // Skip symbol for vote
+          )
+        ) : (
+          isVoting 
+            ? 'Processing...' 
+            : hasVoted 
+              ? 'Remove Vote' 
+              : 'Vote to Skip'
+        )}
       </Button>
 
-      {error && (
-        <Alert severity="error" size="small" sx={{ mt: 1 }}>
+      {/* Show error below button (only on desktop to save space) */}
+      {error && !isMobile && (
+        <Alert severity="error" size="small" sx={{ mt: 1, maxWidth: '200px' }}>
           {error}
         </Alert>
       )}

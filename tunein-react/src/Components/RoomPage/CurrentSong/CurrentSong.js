@@ -171,12 +171,13 @@ const CurrentSong = () => {
     }}>
 
       {/* Header section with SkipSong integration */}
+      {/* Header section with SkipSong integration */}
       <Box sx={{
         display: 'flex',
         justifyContent: 'space-between',
-        alignItems: 'center',
+        alignItems: 'flex-start', // Change from 'center' to 'flex-start'
         mb: { xs: 1.5, md: 2 },
-        flexWrap: { xs: 'wrap', sm: 'nowrap' },
+        minHeight: { xs: '32px', md: '36px' }, // Ensure consistent height
         gap: 1
       }}>
         <Typography
@@ -187,18 +188,20 @@ const CurrentSong = () => {
             fontSize: {
               xs: '1.1rem',
               md: '1.25rem'
-            }
+            },
+            lineHeight: { xs: '32px', md: '36px' }, // Match the minHeight
+            display: 'flex',
+            alignItems: 'center' // Center the text vertically within its line height
           }}
         >
           Now Playing
         </Typography>
 
-        {/* Replace old skip button with SkipSong component */}
         {currentSong && (
           <Box sx={{
             display: 'flex',
-            alignItems: 'center',
-            minWidth: { xs: 'auto', sm: '200px' }, // Give SkipSong enough space
+            alignItems: 'flex-start', // Align to top to match Typography
+            height: { xs: '32px', md: '36px' }, // Match the minHeight
             justifyContent: 'flex-end'
           }}>
             <SkipSong onSkip={handleSkipSuccess} />

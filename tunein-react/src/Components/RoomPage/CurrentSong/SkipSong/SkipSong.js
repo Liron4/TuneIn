@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useMediaQuery, useTheme } from '@mui/material';
 import axios from 'axios';
 import { useSocket } from '../../Context/SocketContext';
 import { useLiveViewers } from './useLiveViewers';
@@ -10,6 +10,8 @@ import SkipVoteDisplay from './SkipVoteDisplay';
 const SkipSong = ({ onSkip }) => {
   const { roomId } = useSocket();
   const [isCreator, setIsCreator] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md')); // Mobile/Tablet
 
   // Check if user is room creator
   useEffect(() => {
@@ -34,36 +36,66 @@ const SkipSong = ({ onSkip }) => {
     checkCreator();
   }, [roomId]);
 
-  // **FIX**: Always use live viewers hook (creators need viewer data too)
-  const { skipData, loading, error, submitSkipVote } = useLiveViewers(roomId, false); // Pass false to always get data
+  // Always use live viewers hook (creators need viewer data too)
+  const { skipData, loading, error, submitSkipVote } = useLiveViewers(roomId, false);
 
   if (isCreator) {
-    // **ENHANCED**: Creator sees viewer data + their special skip button
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: '200px' }}>
-        <CreatorSkipButton onSkip={onSkip} />
-        
-        {/* Creator also sees viewer tracking */}
-        <Box sx={{ mt: 1 }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: { xs: 0.5, md: 1 }, // Reduced gap on mobile
+        minWidth: isMobile ? 'auto' : '200px', // Auto width on mobile
+        alignItems: 'flex-end',
+        overflow: 'hidden', // Prevent overflow
+        maxWidth: '100%' // Don't exceed container width
+      }}>
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: 'row', 
+          alignItems: 'center', 
+          gap: { xs: 0.5, md: 1 }, // Reduced gap on mobile
+          overflow: 'hidden',
+          maxWidth: '100%'
+        }}>
+          <CreatorSkipButton onSkip={onSkip} />
+          <SkipVoteDisplay skipData={skipData} showCreatorMode={true} />
+        </Box>
+        {!isMobile && ( // Hide subtitle on mobile to save space
           <Typography variant="caption" color="text.secondary" align="center" display="block">
             Room Creator - Instant Skip
           </Typography>
-          <SkipVoteDisplay skipData={skipData} showCreatorMode={true} />
-        </Box>
+        )}
       </Box>
     );
   }
 
-  // Regular user voting system
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, minWidth: '200px' }}>
-      <VoteSkipButton
-        skipData={skipData}
-        loading={loading}
-        error={error}
-        onVote={submitSkipVote}
-      />
-      <SkipVoteDisplay skipData={skipData} showCreatorMode={false} />
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      gap: { xs: 0.5, md: 1 }, // Reduced gap on mobile
+      minWidth: isMobile ? 'auto' : '200px', // Auto width on mobile
+      alignItems: 'flex-end',
+      overflow: 'hidden', // Prevent overflow
+      maxWidth: '100%' // Don't exceed container width
+    }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        gap: { xs: 0.5, md: 1 }, // Reduced gap on mobile
+        overflow: 'hidden',
+        maxWidth: '100%'
+      }}>
+        <VoteSkipButton
+          skipData={skipData}
+          loading={loading}
+          error={error}
+          onVote={submitSkipVote}
+        />
+        <SkipVoteDisplay skipData={skipData} showCreatorMode={false} />
+      </Box>
     </Box>
   );
 };
