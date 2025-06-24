@@ -56,14 +56,24 @@ export const useLiveViewers = (roomId, isCreator) => {
         ...prev,
         liveViewers: data.liveViewers,
         // Recalculate threshold when viewer count changes
-        threshold: data.liveViewers <= 1 ? 1 : 
-                   data.liveViewers === 2 ? 2 : 
-                   Math.floor(data.liveViewers / 2) + 1
+        threshold: data.liveViewers <= 1 ? 1 :
+          data.liveViewers === 2 ? 2 :
+            Math.floor(data.liveViewers / 2) + 1
       }));
     };
 
     const handleSongSkippedByVote = (data) => {
       console.log('[HOOK] Song skipped by vote:', data);
+      setSkipData(prev => ({
+        ...prev,
+        skipCount: 0,
+        hasUserVoted: false
+      }));
+    };
+
+    const handleCurrentSongUpdate = (data) => {
+      console.log('[HOOK] Current song updated - resetting vote state');
+      // Reset vote state when new song starts
       setSkipData(prev => ({
         ...prev,
         skipCount: 0,
@@ -81,22 +91,20 @@ export const useLiveViewers = (roomId, isCreator) => {
     };
 
     newSocket.on('skipVoteUpdate', handleSkipVoteUpdate);
-    newSocket.on('viewerCountUpdate', handleViewerCountUpdate);
     newSocket.on('songSkippedByVote', handleSongSkippedByVote);
-    newSocket.on('songChanged', handleSongChanged);
+    newSocket.on('currentSongUpdated', handleCurrentSongUpdate); // **NEW**
 
     return () => {
       newSocket.off('skipVoteUpdate', handleSkipVoteUpdate);
-      newSocket.off('viewerCountUpdate', handleViewerCountUpdate);
       newSocket.off('songSkippedByVote', handleSongSkippedByVote);
-      newSocket.off('songChanged', handleSongChanged);
+      newSocket.off('currentSongUpdated', handleCurrentSongUpdate);
     };
   }, [newSocket]);
 
   // Submit skip vote
   const submitSkipVote = async () => {
     if (loading) return false;
-    
+
     setLoading(true);
     setError('');
 
@@ -107,11 +115,11 @@ export const useLiveViewers = (roomId, isCreator) => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      
+
       // Update local state immediately with server response
       setSkipData(response.data);
       console.log('[HOOK] Vote submitted:', response.data);
-      
+
       return true;
     } catch (err) {
       console.error('[HOOK] Error submitting skip vote:', err);

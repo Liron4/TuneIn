@@ -58,27 +58,6 @@ app.set('socketio', io);
 SocketHandler.setupSocketHandlers(io);
 
 
-// Socket.IO connection handling
-io.on('connection', (socket) => {
-  console.log('User connected:', socket.id);
-
-  // Handle joining a room
-  socket.on('joinRoom', (roomId) => {
-    socket.join(`room-${roomId}`);
-    console.log(`User ${socket.id} joined room-${roomId}`);
-  });
-
-  // Handle leaving a room
-  socket.on('leaveRoom', (roomId) => {
-    socket.leave(`room-${roomId}`);
-    console.log(`User ${socket.id} left room-${roomId}`);
-  });
-
-  socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
-  });
-});
-
 mongoose.connect(process.env.MONGO_URI)
   .then(() => server.listen(5000, () => console.log('Server running on port 5000'))) 
   .catch(err => console.error(err));

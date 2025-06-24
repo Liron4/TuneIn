@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Typography, LinearProgress, Paper } from '@mui/material';
+import { Box, Typography, LinearProgress, Paper, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import SyncIcon from '@mui/icons-material/Sync';
 
 // Custom styled progress bar to look like YouTube
 const StyledLinearProgress = styled(LinearProgress)(({ theme }) => ({
@@ -13,18 +14,76 @@ const StyledLinearProgress = styled(LinearProgress)(({ theme }) => ({
     },
 }));
 
+// **NEW**: Styled sync button
+const SyncButton = styled(Button)(({ theme }) => ({
+    minWidth: 'auto',
+    padding: '4px 8px',
+    borderRadius: '6px',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    color: 'white',
+    fontSize: '0.7rem',
+    fontWeight: 500,
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    '&:hover': {
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        border: '1px solid rgba(255, 255, 255, 0.3)',
+    },
+    '&:disabled': {
+        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+        color: 'rgba(255, 255, 255, 0.3)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+    }
+}));
+
 const SongWidget = ({ currentSong, getElapsedSeconds }) => {
     const [progress, setProgress] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [syncStatus, setSyncStatus] = useState('idle'); // 'idle', 'syncing', 'success', 'error'
     const intervalRef = useRef(null);
-    const timeoutRef = useRef(null); // NEW: Track the setTimeout
+    const timeoutRef = useRef(null);
 
     // Format time in MM:SS format
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = Math.floor(seconds % 60);
         return `${mins}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // **NEW**: Sync function to synchronize MediaPlayer
+    const handleSync = () => {
+        if (!currentSong || typeof window.setYouTubePlayerCurrentTime !== 'function') {
+            console.warn('MediaPlayer sync function not available');
+            setSyncStatus('error');
+            setTimeout(() => setSyncStatus('idle'), 2000);
+            return;
+        }
+
+        setSyncStatus('syncing');
+        
+        try {
+            // Get the current time from the widget
+            const widgetCurrentTime = getElapsedSeconds();
+            
+            console.log(`[SYNC] Synchronizing MediaPlayer to ${widgetCurrentTime.toFixed(1)}s`);
+            
+            // Call the MediaPlayer's global sync function
+            const success = window.setYouTubePlayerCurrentTime(widgetCurrentTime);
+            
+            if (success) {
+                setSyncStatus('success');
+                console.log(`[SYNC] Successfully synchronized to ${widgetCurrentTime.toFixed(1)}s`);
+            } else {
+                setSyncStatus('error');
+                console.warn('[SYNC] Failed to synchronize - MediaPlayer not ready');
+            }
+        } catch (error) {
+            console.error('[SYNC] Error during synchronization:', error);
+            setSyncStatus('error');
+        }
+
+        // Reset status after 2 seconds
+        setTimeout(() => setSyncStatus('idle'), 2000);
     };
 
     // Update progress and current time
@@ -55,7 +114,7 @@ const SongWidget = ({ currentSong, getElapsedSeconds }) => {
 
     // Initialize widget when currentSong changes
     useEffect(() => {
-        // FIXED: Clear both interval and timeout
+        // Clear both interval and timeout
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
@@ -64,6 +123,9 @@ const SongWidget = ({ currentSong, getElapsedSeconds }) => {
             clearTimeout(timeoutRef.current);
             timeoutRef.current = null;
         }
+
+        // Reset sync status when song changes
+        setSyncStatus('idle');
 
         if (!currentSong) {
             // Reset everything when no song
@@ -78,7 +140,7 @@ const SongWidget = ({ currentSong, getElapsedSeconds }) => {
         setCurrentTime(0);
         setDuration(currentSong.duration || 0);
 
-        // FIXED: Store timeout reference for cleanup
+        // Store timeout reference for cleanup
         timeoutRef.current = setTimeout(() => {
             timeoutRef.current = null; // Clear reference once timeout fires
             
@@ -91,7 +153,7 @@ const SongWidget = ({ currentSong, getElapsedSeconds }) => {
             }, 1000);
         }, 500);
 
-        // FIXED: Cleanup both interval and timeout
+        // Cleanup both interval and timeout
         return () => {
             if (intervalRef.current) {
                 clearInterval(intervalRef.current);
@@ -108,6 +170,22 @@ const SongWidget = ({ currentSong, getElapsedSeconds }) => {
     if (!currentSong) {
         return null;
     }
+
+    // **NEW**: Get sync button text and icon based on status
+    const getSyncButtonContent = () => {
+        switch (syncStatus) {
+            case 'syncing':
+                return { text: 'Syncing...', icon: <SyncIcon sx={{ fontSize: 14, animation: 'rotate 1s linear infinite' }} /> };
+            case 'success':
+                return { text: 'Synced!', icon: <SyncIcon sx={{ fontSize: 14, color: '#4caf50' }} /> };
+            case 'error':
+                return { text: 'Error', icon: <SyncIcon sx={{ fontSize: 14, color: '#f44336' }} /> };
+            default:
+                return { text: 'Sync', icon: <SyncIcon sx={{ fontSize: 14 }} /> };
+        }
+    };
+
+    const syncButtonContent = getSyncButtonContent();
 
     return (
         <Paper
@@ -154,6 +232,16 @@ const SongWidget = ({ currentSong, getElapsedSeconds }) => {
                         {currentSong.title}
                     </Typography>
                 </Box>
+
+                {/* **NEW**: Sync Button */}
+                <SyncButton
+                    onClick={handleSync}
+                    disabled={syncStatus === 'syncing'}
+                    startIcon={syncButtonContent.icon}
+                    size="small"
+                >
+                    {syncButtonContent.text}
+                </SyncButton>
             </Box>
 
             {/* Progress Bar */}
@@ -188,6 +276,16 @@ const SongWidget = ({ currentSong, getElapsedSeconds }) => {
                     </Typography>
                 </Box>
             </Box>
+
+            {/* **NEW**: Add CSS for sync button rotation animation */}
+            <style>
+                {`
+                    @keyframes rotate {
+                        from { transform: rotate(0deg); }
+                        to { transform: rotate(360deg); }
+                    }
+                `}
+            </style>
         </Paper>
     );
 };

@@ -8,7 +8,7 @@ class SkipVotingService {
   static calculateThreshold(liveViewers) {
     if (liveViewers <= 1) return 1;
     if (liveViewers === 2) return 2;
-    return Math.floor(liveViewers / 2) + (liveViewers % 2 === 1 ? 1 : 0);
+    return Math.floor(liveViewers / 2) + 1;
   }
 
   // Get skip votes for a room
@@ -112,10 +112,7 @@ class SkipVotingService {
           }
         );
 
-        // Clear skip votes after successful skip
-        this.clearRoomSkipVotes(roomId);
-        console.log(`[SKIP SUCCESS] Song skipped in room ${roomId} due to majority vote`);
-
+    
         // Emit skip notification
         io.to(`room-${roomId}`).emit('songSkippedByVote', {
           reason: 'majority_vote',

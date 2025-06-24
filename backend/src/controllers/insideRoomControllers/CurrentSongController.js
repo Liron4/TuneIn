@@ -1,40 +1,49 @@
 const Room = require('../../models/Room');
 const LiveViewersController = require('./VotingSystem/LiveViewersController');
-
+const SkipVotingService = require('./VotingSystem/SkipVotingService');
+const ViewerTrackingService = require('./VotingSystem/ViewerTrackingService');
 
 let roomsInCountdown = new Set();
+const roomTimers = new Map();
 
 exports.isCountdownActive = (roomId) => {
   return roomsInCountdown.has(roomId);
 };
 
-// Get current song for a room
-exports.getCurrentSong = async (req, res) => {
-  try {
-    const { roomId } = req.params;
-    const room = await Room.findById(roomId);
-
-    if (!room) {
-      return res.status(404).json({ error: 'Room not found' });
+function clearAllRoomTimers(roomId) {
+  const timers = roomTimers.get(roomId);
+  if (timers) {
+    if (timers.transitionTimer) {
+      clearTimeout(timers.transitionTimer);
     }
-
-    return res.status(200).json({
-      currentSong: room.currentSong,
-      serverTime: Date.now() // Needed for client synchronization
-    });
-  } catch (error) {
-    console.error('Error getting current song:', error);
-    return res.status(500).json({ error: 'Server error' });
+    if (timers.songDurationTimer) {
+      clearTimeout(timers.songDurationTimer);
+    }
+    roomTimers.delete(roomId);
   }
-};
+}
 
 const SONG_TRANSITION_DELAY = 5000; // 5 seconds delay before playing the next song
 
-exports.playNextSong = async (roomId, io) => {
+exports.playNextSong = async (roomId, io, source = 'unknown') => {
+  // **SINGLE LOG**: Only log the trigger source once
+  console.log(`[playNextSong] Room ${roomId}: Triggered from "${source}"`);
+  
   try {
     // Clear last votes because we start a new song
-    LiveViewersController.clearRoomSkipVotes(roomId);
-  
+    LiveViewersController.clearRoomSkipVotes(roomId, source);
+    
+    // Clear all timers for this room to prevent conflicts
+    clearAllRoomTimers(roomId);
+
+    io.to(`room-${roomId}`).emit('skipVoteUpdate', {
+      skipCount: 0,
+      threshold: 0,
+      hasUserVoted: false,
+      reason: 'song_changed',
+      source: source
+    });
+
     const room = await Room.findById(roomId);
 
     if (!room || room.songqueue.length === 0) {
@@ -53,18 +62,28 @@ exports.playNextSong = async (roomId, io) => {
     // Start countdown for next song
     io.to(`room-${roomId}`).emit('nextSongCountdown', {
       countdown: SONG_TRANSITION_DELAY / 1000,
-      nextSong: room.songqueue[0]
+      nextSong: room.songqueue[0],
+      source: source
     });
 
-    // Log the countdown timer
-    console.log(`[playNextSong] Room ${roomId}: Starting countdown timer for next song: ${SONG_TRANSITION_DELAY / 1000} seconds`);
-
-    // Wait for the countdown before playing the next song
-    setTimeout(async () => {
+    // **TRANSITION TIMER**: Handle the 5-second delay before starting song
+    const transitionTimer = setTimeout(async () => {
       try {
+        // Always clear countdown state first
+        roomsInCountdown.delete(roomId);
+
+        // Remove transition timer from tracking (it's completed)
+        const timers = roomTimers.get(roomId) || {};
+        if (timers.transitionTimer) {
+          timers.transitionTimer = null;
+          roomTimers.set(roomId, timers);
+        }
+
         // Fetch the room again in case queue has changed during countdown
         const updatedRoom = await Room.findById(roomId);
-        if (!updatedRoom || updatedRoom.songqueue.length === 0) return;
+        if (!updatedRoom || updatedRoom.songqueue.length === 0) {
+          return;
+        }
 
         // Get next song from queue
         const nextSong = updatedRoom.songqueue[0];
@@ -72,10 +91,14 @@ exports.playNextSong = async (roomId, io) => {
         // Remove song from queue
         const updatedQueue = updatedRoom.songqueue.slice(1);
 
-        // Add start time to the song (duration is already included)
+        // Record exact start time to calculate end accurately
+        const exactStartTime = Date.now();
+
+        // Add start time to the song
         const songWithMetadata = {
           ...nextSong,
-          startTime: Date.now()
+          startTime: exactStartTime,
+          triggerSource: source
         };
 
         // Update room with current song and modified queue
@@ -87,35 +110,52 @@ exports.playNextSong = async (roomId, io) => {
         // Emit current song update to all clients in the room
         io.to(`room-${roomId}`).emit('currentSongUpdated', {
           currentSong: songWithMetadata,
-          serverTime: Date.now()
+          serverTime: exactStartTime
+        });
+
+        // Other emission logic
+        const liveViewers = await ViewerTrackingService.getLiveViewersCount(roomId, io);
+        const skipCount = SkipVotingService.getSkipCount(roomId);
+        const threshold = SkipVotingService.calculateThreshold(liveViewers);
+
+        io.to(`room-${roomId}`).emit('skipVoteUpdate', {
+          liveViewers,
+          skipCount,
+          threshold,
+          reason: 'new_song_started',
+          source: source
         });
 
         // Emit queue update
-        io.to(`room-${roomId}`).emit('queueUpdated', { queue: updatedQueue });
+        io.to(`room-${roomId}`).emit('queueUpdated', { 
+          queue: updatedQueue,
+          source: source 
+        });
 
-        // Schedule next song
+        // **SONG DURATION TIMER**: Schedule next song when current one ends
         if (nextSong.duration) {
-          console.log(`[playNextSong] Room ${roomId}: Scheduling next song in ${nextSong.duration} seconds`);
-          setTimeout(() => {
-            exports.playNextSong(roomId, io);
+          const songDurationTimer = setTimeout(() => {
+            exports.playNextSong(roomId, io, 'natural_end');
           }, nextSong.duration * 1000);
-        } else {
-          console.warn(`[playNextSong] Room ${roomId}: nextSong.duration is undefined`);
+
+          // Store timer reference for later cancellation
+          roomTimers.set(roomId, { songDurationTimer });
         }
-      } finally {
-        // Always remove from countdown set when done, regardless of success/failure
-        roomsInCountdown.delete(roomId);
+      } catch (error) {
+        console.error(`[COUNTDOWN ERROR] Room ${roomId}:`, error);
       }
     }, SONG_TRANSITION_DELAY);
 
+    // Track this timer for later cancellation
+    roomTimers.set(roomId, { transitionTimer });
+
   } catch (error) {
-    console.error('Error playing next song:', error);
-    // Clean up countdown flag in case of error
+    console.error(`[playNextSong ERROR] Room ${roomId}:`, error);
     roomsInCountdown.delete(roomId);
   }
 };
 
-// Skip current song - TO BE to be used with the future voting system
+// Skip current song
 exports.skipSong = async (req, res) => {
   try {
     const { roomId } = req.params;
@@ -125,11 +165,8 @@ exports.skipSong = async (req, res) => {
       return res.status(404).json({ error: 'Room not found' });
     }
 
-    // Get IO instance from request
     const io = req.app.get('socketio');
-
-    // Play next song
-    await exports.playNextSong(roomId, io);
+    await exports.playNextSong(roomId, io, "SkipSong");
 
     return res.status(200).json({ message: 'Song skipped successfully' });
   } catch (error) {
@@ -138,40 +175,22 @@ exports.skipSong = async (req, res) => {
   }
 };
 
-// Initialize song playback for a room
-exports.initializeRoomPlayback = async (roomId, io) => {
+// Get current song for a room
+exports.getCurrentSong = async (req, res) => {
   try {
+    const { roomId } = req.params;
     const room = await Room.findById(roomId);
 
-    if (!room) return;
-
-    if (room.currentSong) {
-      const now = Date.now();
-      const startTime = room.currentSong.startTime;
-      const duration = room.currentSong.duration;
-
-      if (startTime && duration) {
-        const elapsedTime = (now - startTime) / 1000;
-
-        if (elapsedTime < duration) {
-          // Song is still playing, schedule next song
-          const remainingTime = duration - elapsedTime;
-          setTimeout(() => {
-            exports.playNextSong(roomId, io);
-          }, remainingTime * 1000 + 1000);
-        } else {
-          // Song has ended, play next song immediately
-          exports.playNextSong(roomId, io);
-        }
-      } else {
-        // Missing metadata, play next song
-        exports.playNextSong(roomId, io);
-      }
-    } else if (room.songqueue.length > 0) {
-      // No current song but queue has songs
-      exports.playNextSong(roomId, io);
+    if (!room) {
+      return res.status(404).json({ error: 'Room not found' });
     }
+
+    return res.status(200).json({
+      currentSong: room.currentSong,
+      serverTime: Date.now()
+    });
   } catch (error) {
-    console.error('Error initializing room playback:', error);
+    console.error('Error getting current song:', error);
+    return res.status(500).json({ error: 'Server error' });
   }
 };

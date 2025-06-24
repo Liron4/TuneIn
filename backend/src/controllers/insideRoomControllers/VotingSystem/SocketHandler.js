@@ -58,18 +58,6 @@ class SocketHandler {
         }
       });
 
-      // Handle song changes (clear skip votes)
-      socket.on('songChanged', (roomId) => {
-        console.log(`[SOCKET] Song changed in room ${roomId} - clearing skip votes`);
-        LiveViewersController.clearRoomSkipVotes(roomId);
-        
-        // Emit reset to all clients
-        io.to(`room-${roomId}`).emit('skipVoteUpdate', {
-          skipCount: 0,
-          threshold: 0,
-          reason: 'song_changed'
-        });
-      });
     });
   }
 
