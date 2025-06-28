@@ -27,10 +27,10 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// Update user points
+// Update user points (add or reduce)
 exports.updatePoints = async (req, res) => {
   try {
-    const { points } = req.body;
+    const { points, nickname, operation } = req.body;
     const userId = req.user.userId;
 
     // Validate points
@@ -38,23 +38,39 @@ exports.updatePoints = async (req, res) => {
       return res.status(400).json({ message: 'Points must be a non-negative number' });
     }
 
-    // Update the user's points
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { points },
-      { new: true }
-    ).select('-password');
+    // Validate operation
+    const op = operation === 'reduce' ? 'reduce' : 'add';
 
-    if (!updatedUser) {
+    // Determine search criteria: by userId or nickname
+    let query = {};
+    if (nickname) {
+      query.nickname = nickname;
+    } else {
+      query._id = userId;
+    }
+
+    // Find the user first
+    const user = await User.findOne(query);
+    if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    let newPoints;
+    if (op === 'reduce') {
+      newPoints = Math.max(0, user.points - points);
+    } else {
+      newPoints = user.points + points;
+    }
+
+    user.points = newPoints;
+    await user.save();
+
     res.json({
-      nickname: updatedUser.nickname,
-      email: updatedUser.email,
-      profilePic: updatedUser.profilePic,
-      genres: updatedUser.genres,
-      points: updatedUser.points
+      nickname: user.nickname,
+      email: user.email,
+      profilePic: user.profilePic,
+      genres: user.genres,
+      points: user.points
     });
   } catch (err) {
     console.error('Points update error:', err);
