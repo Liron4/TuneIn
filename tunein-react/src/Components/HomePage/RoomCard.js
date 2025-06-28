@@ -9,6 +9,7 @@ import {
   Chip
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import PeopleIcon from '@mui/icons-material/People';
 
 const RoomCard = ({ room }) => {
   const navigate = useNavigate();
@@ -18,12 +19,16 @@ const RoomCard = ({ room }) => {
     navigate(`/room/${room._id}`);
   };
 
+  // Use only the capacity field from the room data
+  const displayViewers = room.capacity || 0;
+
   return (
     <Card sx={{ 
       maxWidth: '100%', 
       height: '100%',
       display: 'flex', 
-      flexDirection: 'column'
+      flexDirection: 'column',
+      position: 'relative'
     }}> 
       <CardActionArea 
         onClick={handleCardClick} 
@@ -39,6 +44,23 @@ const RoomCard = ({ room }) => {
           }
         }}
       >
+        {/* Live Viewer Count Badge */}
+        <Box sx={{ position: 'absolute', top: 8, right: 8, zIndex: 2 }}>
+          <Chip
+            icon={<PeopleIcon sx={{ fontSize: '16px !important' }} />}
+            label={displayViewers}
+            size="small"
+            sx={{
+              backgroundColor: displayViewers > 0 ? '#4caf50' : '#757575',
+              color: 'white',
+              fontWeight: 'bold',
+              '& .MuiChip-icon': {
+                color: 'white'
+              }
+            }}
+          />
+        </Box>
+
         <CardMedia
           component="img"
           height="140"
@@ -80,6 +102,14 @@ const RoomCard = ({ room }) => {
                 }}
               />
             )}
+          </Box>
+
+          {/* Room Stats */}
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+            <PeopleIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+              {displayViewers} {displayViewers === 1 ? 'listener' : 'listeners'}
+            </Typography>
           </Box>
           
           <Box sx={{ display: 'flex', alignItems: 'center', mt: 'auto' }}>

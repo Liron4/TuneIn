@@ -1,19 +1,40 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Button, Grid, CircularProgress } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Button,
+  Grid,
+  CircularProgress,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
+  Paper,
+  Divider
+} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import axios from 'axios';
 import RoomCard from './RoomCard';
 import CreateRoomModal from './CreateRoomModal';
 
 const RoomBrowser = () => {
   const [rooms, setRooms] = useState([]);
+  const [filteredRooms, setFilteredRooms] = useState([]);
+  const [userGenres, setUserGenres] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openCreateModal, setOpenCreateModal] = useState(false);
+  const [filterMode, setFilterMode] = useState('all'); // 'all' or 'recommended'
+  const [genresLoading, setGenresLoading] = useState(false);
 
   useEffect(() => {
     fetchRooms();
+    fetchUserGenres();
   }, []);
+
+  useEffect(() => {
+    applyFilter();
+  }, [rooms, userGenres, filterMode]);
 
   const fetchRooms = async () => {
     setLoading(true);
@@ -43,35 +64,121 @@ const RoomBrowser = () => {
     }
   };
 
-// In RoomBrowser.js where handleCreateRoom is defined
-const handleCreateRoom = async (roomData) => {
-  try {
-    // Get the token from localStorage
-    const token = localStorage.getItem('authToken');
-    
-    if (!token) {
-      console.error('No authentication token found');
-      // Handle missing token (redirect to login, show error, etc)
-      return;
-    }
+  const fetchUserGenres = async () => {
+    setGenresLoading(true);
+    try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
 
-    // Include the token in request headers
-    const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms`, roomData, {
-      headers: {
-      'Authorization': `Bearer ${token}`,
-        // No need to set Content-Type with FormData - axios sets it automatically with boundary
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/user/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      setUserGenres(response.data.genres || []);
+    } catch (err) {
+      console.error('Error fetching user genres:', err);
+      // Don't show error for genres fetch failure, just continue with empty genres
+    } finally {
+      setGenresLoading(false);
+    }
+  };
+
+  const applyFilter = () => {
+    if (filterMode === 'all') {
+      setFilteredRooms(rooms);
+    } else if (filterMode === 'recommended') {
+      if (userGenres.length === 0) {
+        setFilteredRooms([]);
+        return;
+      }
+
+      const recommended = rooms.filter(room => {
+        if (!room.genres || room.genres.length === 0) return false;
+
+        // Check if room has at least 1 genre in common with user genres
+        return room.genres.some(roomGenre =>
+          userGenres.some(userGenre =>
+            userGenre.toLowerCase() === roomGenre.toLowerCase()
+          )
+        );
+      });
+
+      setFilteredRooms(recommended);
+    }
+  };
+
+  const handleFilterChange = async (event) => {
+    const newFilterMode = event.target.value;
+    setFilterMode(newFilterMode);
+
+    // If switching to recommended, refresh user genres to get latest preferences
+    if (newFilterMode === 'recommended') {
+      await fetchUserGenres();
+    }
+  };
+
+  const handleCreateRoom = async (roomData) => {
+    try {
+      const token = localStorage.getItem('authToken');
+
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/rooms`, roomData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+
+      console.log('Room created:', response.data);
+      // Refresh rooms after creation
+      fetchRooms();
+
+    } catch (error) {
+      console.error('Error creating room:', error);
+    }
+  };
+
+  const getFilterStats = () => {
+    const total = rooms.length;
+    const recommended = rooms.filter(room => {
+      if (!room.genres || room.genres.length === 0 || userGenres.length === 0) return false;
+      return room.genres.some(roomGenre =>
+        userGenres.some(userGenre =>
+          userGenre.toLowerCase() === roomGenre.toLowerCase()
+        )
+      );
+    }).length;
+
+    return { total, recommended };
+  };
+
+  const getCommonGenres = () => {
+    if (userGenres.length === 0 || filteredRooms.length === 0) return [];
+
+    const roomGenres = new Set();
+    filteredRooms.forEach(room => {
+      if (room.genres) {
+        room.genres.forEach(genre => roomGenres.add(genre.toLowerCase()));
       }
     });
 
-    // Handle successful response
-    console.log('Room created:', response.data);
-    // Update your rooms state or whatever you need to do
-    
-  } catch (error) {
-    console.error('Error creating room:', error);
-    // Handle error
-  }
-};
+    return userGenres.filter(userGenre =>
+      roomGenres.has(userGenre.toLowerCase())
+    );
+  };
+
+  const stats = getFilterStats();
+  const commonGenres = getCommonGenres();
+
+
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -80,8 +187,8 @@ const handleCreateRoom = async (roomData) => {
           Music Rooms
         </Typography>
         <Box sx={{ position: 'absolute', right: 0 }}>
-          <Button 
-            variant="contained" 
+          <Button
+            variant="contained"
             startIcon={<AddIcon />}
             onClick={() => setOpenCreateModal(true)}
           >
@@ -89,6 +196,43 @@ const handleCreateRoom = async (roomData) => {
           </Button>
         </Box>
       </Box>
+
+      {/* Filter Controls */}
+      <Paper sx={{ p: 2, mb: 3, backgroundColor: '#f5f5f5' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+          <FilterListIcon sx={{ mr: 1 }} />
+          <Typography variant="h6">Filter Rooms</Typography>
+        </Box>
+        <RadioGroup
+          row
+          value={filterMode}
+          onChange={handleFilterChange}
+          sx={{ mb: 1 }}
+        >
+          <FormControlLabel
+            value="all"
+            control={<Radio />}
+            label={`All Rooms (${stats.total})`}
+          />
+          <FormControlLabel
+            value="recommended"
+            control={<Radio />}
+            label={
+              genresLoading
+                ? "Loading recommendations..."
+                : userGenres.length === 0
+                  ? "Recommended (Set your genres in profile)"
+                  : `Recommended for You (${stats.recommended})`
+            }
+            disabled={genresLoading || userGenres.length === 0}
+          />
+        </RadioGroup>
+        {filterMode === 'recommended' && commonGenres.length > 0 && (
+          <Typography variant="caption" color="textSecondary">
+            Based on your genres: {commonGenres.join(', ')}
+          </Typography>
+        )}
+      </Paper>
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', my: 4 }}>
@@ -100,8 +244,8 @@ const handleCreateRoom = async (roomData) => {
         </Typography>
       ) : (
         <Grid container spacing={3}>
-          {rooms.length > 0 ? (
-            rooms.map((room) => (
+          {filteredRooms.length > 0 ? (
+            filteredRooms.map((room) => (
               <Grid item xs={12} sm={6} md={4} key={room._id}>
                 <RoomCard room={room} />
               </Grid>
@@ -109,14 +253,19 @@ const handleCreateRoom = async (roomData) => {
           ) : (
             <Box sx={{ width: '100%', textAlign: 'center', my: 4 }}>
               <Typography variant="h6" color="textSecondary">
-                No rooms available. Create one to get started!
+                {filterMode === 'recommended'
+                  ? userGenres.length === 0
+                    ? "Set your favorite genres in your profile to get personalized recommendations!"
+                    : "No rooms match your preferences. Try creating one or switch to 'All Rooms'!"
+                  : "No rooms available. Create one to get started!"
+                }
               </Typography>
             </Box>
           )}
         </Grid>
       )}
 
-      <CreateRoomModal 
+      <CreateRoomModal
         open={openCreateModal}
         onClose={() => setOpenCreateModal(false)}
         onSubmit={handleCreateRoom}
