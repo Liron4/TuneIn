@@ -115,7 +115,7 @@ const RoomBrowser = () => {
   const handleFilterChange = async (event) => {
     const newFilterMode = event.target.value;
     setFilterMode(newFilterMode);
-
+    
     // If switching to recommended, refresh user genres to get latest preferences
     if (newFilterMode === 'recommended') {
       await fetchUserGenres();

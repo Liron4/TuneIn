@@ -6,8 +6,6 @@ class ViewerTrackingService {
     try {
       const roomSockets = await io.in(`room-${roomId}`).fetchSockets();
       const liveViewers = roomSockets.length;
-
-      console.log(`[VIEWER TRACKING] Room ${roomId} has ${liveViewers} live viewers`);
       return liveViewers;
     } catch (error) {
       console.error('[VIEWER TRACKING] Error getting live viewers count:', error);
@@ -19,7 +17,6 @@ class ViewerTrackingService {
   static async updateRoomCapacity(roomId, liveViewers) {
     try {
       await Room.findByIdAndUpdate(roomId, { capacity: liveViewers });
-      console.log(`[VIEWER TRACKING] Updated room ${roomId} capacity to ${liveViewers}`);
       return true;
     } catch (error) {
       console.error('[VIEWER TRACKING] Error updating room capacity:', error);
@@ -45,8 +42,6 @@ class ViewerTrackingService {
       threshold,
       reason: 'viewer_count_changed'
     });
-
-    console.log(`[VIEWER TRACKING] Emitted updates to room ${roomId}: ${liveViewers} viewers, ${skipCount}/${threshold} votes`);
   }
 
   // Get and update live viewers (combined operation)

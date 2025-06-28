@@ -4,19 +4,16 @@ const SkipVotingService = require('./SkipVotingService');
 class SocketHandler {
   static setupSocketHandlers(io) {
     io.on('connection', (socket) => {
-      console.log('[SOCKET] User connected:', socket.id);
 
       // Handle user identification for proper vote tracking
       socket.on('setUserId', (userId) => {
         socket.userId = userId;
-        console.log(`[SOCKET] Socket ${socket.id} identified as user ${userId}`);
       });
 
       // Handle room joining with enhanced tracking
       socket.on('joinRoom', async (roomId) => {
         socket.join(`room-${roomId}`);
         socket.roomId = roomId;
-        console.log(`[SOCKET] User ${socket.id} joined room-${roomId}`);
 
         // Update viewer count and emit to all users
         await this.updateRoomViewerCount(roomId, io, 'user_joined');
@@ -25,13 +22,11 @@ class SocketHandler {
       // Handle room leaving with cleanup
       socket.on('leaveRoom', async (roomId) => {
         socket.leave(`room-${roomId}`);
-        console.log(`[SOCKET] User ${socket.id} left room-${roomId}`);
 
         // Remove user from skip votes and update counts
         const userId = socket.userId;
         if (userId) {
           LiveViewersController.removeUserFromSkipVotes(roomId, userId);
-          console.log(`[SOCKET] Removed user ${userId} skip votes from room ${roomId}`);
         }
 
         // Update viewer count for remaining users
@@ -40,8 +35,6 @@ class SocketHandler {
 
       // Handle disconnect with proper cleanup
       socket.on('disconnect', async () => {
-        console.log('[SOCKET] User disconnected:', socket.id);
-        
         // Clean up if user was in a room
         if (socket.roomId) {
           const roomId = socket.roomId;
@@ -50,7 +43,6 @@ class SocketHandler {
           // Remove from skip votes
           if (userId) {
             LiveViewersController.removeUserFromSkipVotes(roomId, userId);
-            console.log(`[SOCKET] Cleaned up user ${userId} from room ${roomId} on disconnect`);
           }
 
           // Update viewer count for remaining users
@@ -68,7 +60,9 @@ class SocketHandler {
       const roomSockets = await io.in(`room-${roomId}`).fetchSockets();
       const liveViewers = roomSockets.length;
       
-      console.log(`[SOCKET] Room ${roomId} now has ${liveViewers} viewers (${reason})`);
+      // **CRITICAL FIX**: Update room capacity in database
+      const ViewerTrackingService = require('./ViewerTrackingService');
+      await ViewerTrackingService.updateRoomCapacity(roomId, liveViewers);
       
       // Emit viewer count update
       io.to(`room-${roomId}`).emit('viewerCountUpdate', {
@@ -86,8 +80,6 @@ class SocketHandler {
         threshold,
         reason: `viewer_${reason}`
       });
-
-      console.log(`[SOCKET] Emitted updates to room ${roomId}: ${liveViewers} viewers, ${skipCount}/${threshold} votes`);
 
     } catch (error) {
       console.error(`[SOCKET] Error updating viewer count for room ${roomId}:`, error);

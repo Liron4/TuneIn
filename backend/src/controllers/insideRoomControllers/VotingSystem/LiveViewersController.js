@@ -2,14 +2,11 @@ const SkipVotingService = require('./SkipVotingService');
 const ViewerTrackingService = require('./ViewerTrackingService');
 
 class LiveViewersController {
-  // **CRITICAL FIX**: Change req.user.id to req.user.userId
   static async getLiveViewers(req, res) {
     try {
       const { roomId } = req.params;
       const userId = req.user.userId; // <-- CHANGED FROM req.user.id
       const io = req.app.get('socketio');
-
-      console.log(`[GET LIVE VIEWERS] User ${userId} requesting data for room ${roomId}`);
 
       // Get live viewers and update capacity
       const liveViewers = await ViewerTrackingService.getAndUpdateLiveViewers(roomId, io);
@@ -21,9 +18,6 @@ class LiveViewersController {
 
       // Get detailed voting info for debugging
       const votingInfo = SkipVotingService.getVotingInfo(roomId);
-
-      console.log(`[LIVE VIEWERS RESPONSE] Room ${roomId}: ${liveViewers} viewers, ${skipCount}/${threshold} votes`);
-      console.log(`[USER VOTE STATUS] User ${userId}: ${hasUserVoted ? 'HAS VOTED' : 'NOT VOTED'}`);
 
       res.json({
         liveViewers,
@@ -40,14 +34,11 @@ class LiveViewersController {
     }
   }
 
-  // **CRITICAL FIX**: Change req.user.id to req.user.userId
   static async handleSkipVote(req, res) {
     try {
       const { roomId } = req.params;
       const userId = req.user.userId; // <-- CHANGED FROM req.user.id
       const io = req.app.get('socketio');
-
-      console.log(`[VOTE REQUEST] User ${userId} in room ${roomId}`);
 
       // Get live viewers and update capacity
       const liveViewers = await ViewerTrackingService.getAndUpdateLiveViewers(roomId, io);
@@ -55,8 +46,6 @@ class LiveViewersController {
       // Use toggleUserVote for proper toggle functionality
       const { action, skipCount } = SkipVotingService.toggleUserVote(roomId, userId);
       const threshold = SkipVotingService.calculateThreshold(liveViewers);
-
-      console.log(`[VOTE RESULT] User ${userId} ${action} vote. Current: ${skipCount}/${threshold}`);
 
       // Get current voting state
       const hasUserVoted = SkipVotingService.hasUserVoted(roomId, userId);
@@ -96,7 +85,6 @@ class LiveViewersController {
 
   // Clear skip votes for a room (called when song changes)
   static clearRoomSkipVotes(roomId) {
-    console.log(`[CONTROLLER CLEAR] Clearing skip votes for room ${roomId}`);
     SkipVotingService.clearRoomSkipVotes(roomId);
   }
 

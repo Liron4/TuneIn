@@ -28,23 +28,16 @@ class SkipVotingService {
   static toggleUserVote(roomId, userId) {
     const skipVotes = this.initializeSkipVotes(roomId);
     
-    console.log(`[VOTE TOGGLE] User ${userId} in room ${roomId}`);
-    console.log(`[VOTE STATE BEFORE] Room ${roomId} votes:`, Array.from(skipVotes));
-    
     let action;
     if (skipVotes.has(userId)) {
       // User already voted - remove their vote
       skipVotes.delete(userId);
       action = 'removed';
-      console.log(`[VOTE REMOVED] User ${userId} removed vote from room ${roomId}`);
     } else {
       // User hasn't voted - add their vote
       skipVotes.add(userId);
       action = 'added';
-      console.log(`[VOTE ADDED] User ${userId} added vote to room ${roomId}`);
     }
-    
-    console.log(`[VOTE STATE AFTER] Room ${roomId} votes:`, Array.from(skipVotes));
     
     return { action, skipCount: skipVotes.size };
   }
@@ -54,12 +47,10 @@ class SkipVotingService {
     const skipVotes = this.initializeSkipVotes(roomId);
     
     if (skipVotes.has(userId)) {
-      console.log(`[VOTE DUPLICATE] User ${userId} already voted in room ${roomId}`);
       return { action: 'already_voted', skipCount: skipVotes.size };
     }
     
     skipVotes.add(userId);
-    console.log(`[VOTE FORCE ADD] User ${userId} added vote to room ${roomId}`);
     return { action: 'added', skipCount: skipVotes.size };
   }
 
@@ -71,7 +62,6 @@ class SkipVotingService {
     }
     
     skipVotes.delete(userId);
-    console.log(`[VOTE FORCE REMOVE] User ${userId} removed vote from room ${roomId}`);
     return { action: 'removed', skipCount: skipVotes.size };
   }
 
@@ -79,7 +69,6 @@ class SkipVotingService {
   static hasUserVoted(roomId, userId) {
     const skipVotes = roomSkipVotes.get(roomId);
     const hasVoted = skipVotes ? skipVotes.has(userId) : false;
-    console.log(`[VOTE CHECK] User ${userId} in room ${roomId}: ${hasVoted ? 'HAS VOTED' : 'NOT VOTED'}`);
     return hasVoted;
   }
 
@@ -94,10 +83,8 @@ class SkipVotingService {
     const skipCount = this.getSkipCount(roomId);
     const threshold = this.calculateThreshold(liveViewers);
 
-    console.log(`[SKIP CHECK] Room ${roomId}: ${skipCount}/${threshold} votes (${liveViewers} viewers)`);
-
     if (skipCount >= threshold && liveViewers > 0) {
-      console.log(`[SKIP TRIGGERED] Room ${roomId}: Threshold met! Triggering skip...`);
+      console.log(`[SKIP TRIGGERED] Room ${roomId}: Threshold met! (${skipCount}/${threshold})`);
       
       try {
         // Trigger the actual skip
@@ -132,13 +119,7 @@ class SkipVotingService {
 
   // **ENHANCED**: Clear skip votes for a room
   static clearRoomSkipVotes(roomId) {
-    const skipVotes = roomSkipVotes.get(roomId);
-    if (skipVotes) {
-      console.log(`[CLEANUP BEFORE] Room ${roomId} had votes from:`, Array.from(skipVotes));
-    }
-    
     roomSkipVotes.delete(roomId);
-    console.log(`[CLEANUP] Cleared all skip votes for room ${roomId}`);
   }
 
   // Remove user from skip votes (when user leaves)
@@ -146,7 +127,6 @@ class SkipVotingService {
     const skipVotes = roomSkipVotes.get(roomId);
     if (skipVotes && skipVotes.has(userId)) {
       skipVotes.delete(userId);
-      console.log(`[USER LEFT] Removed user ${userId} from skip votes in room ${roomId}`);
       return true;
     }
     return false;
@@ -169,7 +149,6 @@ class SkipVotingService {
     for (const [roomId, votes] of roomSkipVotes.entries()) {
       allVotes[roomId] = Array.from(votes);
     }
-    console.log('[ALL VOTES DEBUG]', allVotes);
     return allVotes;
   }
 }
