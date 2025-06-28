@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, Avatar } from '@mui/material';
 
-const Message = ({ message }) => {
+const Message = ({ message, onUsernameClick }) => {
   // Format video timestamp
   const formatVideoTime = (seconds) => {
     if (!seconds && seconds !== 0) return null;
@@ -15,6 +15,13 @@ const Message = ({ message }) => {
   const userMessage = message.message || '';
 
   console.log('Rendering message:', { userName, userMessage, message }); // Debug log
+
+  // Handle username click
+  const handleUsernameClick = () => {
+    if (onUsernameClick && userName !== 'Anonymous') {
+      onUsernameClick(userName);
+    }
+  };
 
   return (
     <Box sx={{ mb: 2 }}>
@@ -52,10 +59,16 @@ const Message = ({ message }) => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
             <Typography 
               variant="caption" 
+              onClick={handleUsernameClick}
               sx={{ 
                 color: `hsl(${userName.charCodeAt(0) * 10}, 60%, 70%)`,
                 fontWeight: 600,
-                fontSize: '0.75rem'
+                fontSize: '0.75rem',
+                cursor: userName !== 'Anonymous' ? 'pointer' : 'default',
+                '&:hover': userName !== 'Anonymous' ? {
+                  color: `hsl(${userName.charCodeAt(0) * 10}, 70%, 80%)`,
+                  textDecoration: 'underline'
+                } : {}
               }}
             >
               {userName}

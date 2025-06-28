@@ -11,6 +11,7 @@ import ChatIcon from '@mui/icons-material/Chat';
 import { styled } from '@mui/material/styles';
 import axios from 'axios';
 import MessageList from './MessageList';
+import UserProfilePopup from './UserProfilePopup';
 import { useSocket } from '../Context/SocketContext';
 
 const StyledChatContainer = styled(Paper)(({ theme }) => ({
@@ -27,6 +28,7 @@ const ChatPanel = ({ roomId }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [userProfile, setUserProfile] = useState(null);
+  const [selectedUsername, setSelectedUsername] = useState(null);
   const inputRef = useRef(null);
   const { newSocket, isConnected } = useSocket();
   const MAX_MESSAGES = 200;
@@ -191,6 +193,17 @@ const ChatPanel = ({ roomId }) => {
     }
   };
 
+  // Handle username click to show profile popup
+  const handleUsernameClick = (username) => {
+    console.log('Username clicked:', username);
+    setSelectedUsername(username);
+  };
+
+  // Handle closing profile popup
+  const handleCloseProfilePopup = () => {
+    setSelectedUsername(null);
+  };
+
   return (
     <StyledChatContainer>
       {/* Header */}
@@ -215,7 +228,7 @@ const ChatPanel = ({ roomId }) => {
       </Box>
 
       {/* Messages */}
-      <MessageList messages={messages} />
+      <MessageList messages={messages} onUsernameClick={handleUsernameClick} />
 
       {/* Input */}
       <Box sx={{ p: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
@@ -288,6 +301,14 @@ const ChatPanel = ({ roomId }) => {
           {newMessage.length}/50 {newMessage.length > 50 && '- Message too long!'}
         </Typography>
       </Box>
+
+      {/* User Profile Popup */}
+      {selectedUsername && (
+        <UserProfilePopup 
+          username={selectedUsername} 
+          onClose={handleCloseProfilePopup} 
+        />
+      )}
     </StyledChatContainer>
   );
 };

@@ -22,7 +22,7 @@ const StyledMessageContainer = styled(Box)({
   },
 });
 
-const MessageList = ({ messages }) => {
+const MessageList = ({ messages, onUsernameClick }) => {
   console.log('MessageList received messages:', messages); // Debug log
 
   return (
@@ -49,6 +49,7 @@ const MessageList = ({ messages }) => {
             <Message 
               key={message.id || `msg-${index}`} 
               message={message} 
+              onUsernameClick={onUsernameClick}
             />
           );
         })

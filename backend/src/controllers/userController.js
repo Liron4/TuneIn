@@ -27,6 +27,31 @@ exports.getProfile = async (req, res) => {
   }
 };
 
+// Get user profile by username (public route)
+exports.getUserProfileByUsername = async (req, res) => {
+  try {
+    const { username } = req.params;
+    
+    // Find the user by nickname, excluding password and email
+    const user = await User.findOne({ nickname: username }).select('-password -email');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Return public user data (no email)
+    res.json({
+      nickname: user.nickname,
+      profilePic: user.profilePic,
+      genres: user.genres,
+      points: user.points
+    });
+  } catch (err) {
+    console.error('Profile fetch by username error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Update user points (add or reduce)
 exports.updatePoints = async (req, res) => {
   try {
