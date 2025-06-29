@@ -79,7 +79,7 @@ const CurrentSong = () => {
     };
   }, [newSocket, roomId]); // Dependencies: re-run when socket or roomId changes
 
-  // Fetch current song on initial load - auto-start
+  //***** Fetch current song on initial load - auto-start *****
   useEffect(() => {
     if (!roomId) return;
 
@@ -217,6 +217,7 @@ const CurrentSong = () => {
 
       {/* Rest of the component remains the same */}
       <SongWidget
+        key={currentSong?.startTime || 'no-song'} // Force re-mount for duplicate songs
         currentSong={currentSong}
         getElapsedSeconds={getElapsedSeconds}
       />
@@ -237,6 +238,7 @@ const CurrentSong = () => {
       {currentSong ? (
         <Paper sx={{ p: { xs: 1.5, md: 2 }, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.4)', maxWidth: '100%', overflow: 'hidden' }}>
           <MediaPlayer
+            key={currentSong.startTime} // Force re-mount for duplicate songs
             videoId={currentSong.id}
             startTime={getElapsedSeconds()}
             songData={currentSong}

@@ -22,7 +22,7 @@ const StyledMessageContainer = styled(Box)({
   },
 });
 
-const MessageList = ({ messages, onUsernameClick }) => {
+const MessageList = ({ messages, onUsernameClick, currentUserIsCreator, currentUsername }) => {
   console.log('MessageList received messages:', messages); // Debug log
 
   return (
@@ -45,11 +45,16 @@ const MessageList = ({ messages, onUsernameClick }) => {
       ) : (
         messages.map((message, index) => {
           console.log(`Rendering message ${index}:`, message); // Debug log
+          
+          // Check if this message is from the current user and they are the creator
+          const isCreatorMessage = currentUserIsCreator && message.userName === currentUsername;
+          
           return (
             <Message 
               key={message.id || `msg-${index}`} 
               message={message} 
               onUsernameClick={onUsernameClick}
+              showCreatorBadge={isCreatorMessage}
             />
           );
         })

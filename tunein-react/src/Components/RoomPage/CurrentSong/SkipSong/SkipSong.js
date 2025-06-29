@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { Box, Typography, useMediaQuery, useTheme } from '@mui/material';
-import axios from 'axios';
 import { useSocket } from '../../Context/SocketContext';
 import { useLiveViewers } from './useLiveViewers';
 import CreatorSkipButton from './CreatorSkipButton';
@@ -8,33 +7,15 @@ import VoteSkipButton from './VoteSkipButton';
 import SkipVoteDisplay from './SkipVoteDisplay';
 
 const SkipSong = ({ onSkip }) => {
-  const { roomId } = useSocket();
-  const [isCreator, setIsCreator] = useState(false);
+  const { roomId, roomCreator } = useSocket();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md')); // Mobile/Tablet
 
-  // Check if user is room creator
-  useEffect(() => {
-    const checkCreator = async () => {
-      try {
-        const token = localStorage.getItem('authToken');
-        const userId = localStorage.getItem('userId');
-        
-        if (!token || !roomId || !userId) return;
-
-        const roomResponse = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/rooms/${roomId}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-
-        setIsCreator(roomResponse.data.creator === userId);
-      } catch (err) {
-        console.error('Error checking creator status:', err);
-      }
-    };
-
-    checkCreator();
-  }, [roomId]);
+  // Check if user is room creator using context data
+  const isCreator = useMemo(() => {
+    const userId = localStorage.getItem('userId');
+    return userId && roomCreator && roomCreator._id === userId;
+  }, [roomCreator]);
 
   // Always use live viewers hook (creators need viewer data too)
   const { skipData, loading, error, submitSkipVote } = useLiveViewers(roomId, false);

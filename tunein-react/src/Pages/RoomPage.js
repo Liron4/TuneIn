@@ -53,6 +53,8 @@ const RoomPage = () => {
     }
 
     console.log('RoomPage: Creating socket connection for room:', roomId);
+    console.log('Creator of the room:', room?.creator);
+    
 
     const token = localStorage.getItem('authToken');
     const newSocket = io(process.env.REACT_APP_API_URL, {
@@ -95,7 +97,7 @@ const RoomPage = () => {
   );
 
   return (
-    <SocketProvider newSocket={roomSocket} roomId={roomId}>
+    <SocketProvider newSocket={roomSocket} roomId={roomId} roomCreator={room?.creator}>
       <Box sx={{
         display: 'flex',
         height: '100vh',

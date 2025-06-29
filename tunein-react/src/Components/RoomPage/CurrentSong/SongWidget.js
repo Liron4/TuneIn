@@ -114,6 +114,8 @@ const SongWidget = ({ currentSong, getElapsedSeconds }) => {
 
     // Initialize widget when currentSong changes
     useEffect(() => {
+        console.log(`[SongWidget] Effect triggered for song: "${currentSong?.title}" (ID: ${currentSong?.id}, StartTime: ${currentSong?.startTime})`);
+        
         // Clear both interval and timeout
         if (intervalRef.current) {
             clearInterval(intervalRef.current);
@@ -164,7 +166,7 @@ const SongWidget = ({ currentSong, getElapsedSeconds }) => {
                 timeoutRef.current = null;
             }
         };
-    }, [currentSong?.id]); // Only depend on song ID to ensure proper reset
+    }, [currentSong?.id, currentSong?.startTime]); // Depend on both ID and startTime to ensure proper reset for duplicate songs
 
     // Don't render if no current song
     if (!currentSong) {

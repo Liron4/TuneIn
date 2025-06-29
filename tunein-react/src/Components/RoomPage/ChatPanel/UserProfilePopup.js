@@ -13,12 +13,15 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import PersonIcon from '@mui/icons-material/Person';
 import StarIcon from '@mui/icons-material/Star';
+import VerifiedIcon from '@mui/icons-material/Verified';
 import axios from 'axios';
+import { useSocket } from '../Context/SocketContext';
 
 const UserProfilePopup = ({ username, onClose }) => {
     const [profileData, setProfileData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { roomCreator } = useSocket(); // Get room creator from context
 
     useEffect(() => {
         if (username) {
@@ -45,6 +48,9 @@ const UserProfilePopup = ({ username, onClose }) => {
     };
 
     if (!username) return null;
+
+    // Check if this user is the room creator
+    const isRoomCreator = profileData && roomCreator && profileData.userId === roomCreator._id;
 
     return (
         <Backdrop
@@ -124,8 +130,11 @@ const UserProfilePopup = ({ username, onClose }) => {
                                     </Avatar>
                                 )}
                                 <Box>
-                                    <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 0.5, color: '#fff' }}>
+                                    <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 0.5, color: '#fff', display: 'flex', alignItems: 'center', gap: 1 }}>
                                         {profileData.nickname}
+                                        {isRoomCreator && (
+                                            <VerifiedIcon sx={{ color: '#1976d2', fontSize: 20 }} />
+                                        )}
                                     </Typography>
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                         <StarIcon sx={{ color: '#FFD700', fontSize: 16, mr: 0.5 }} />
@@ -176,7 +185,7 @@ const UserProfilePopup = ({ username, onClose }) => {
                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                     <PersonIcon sx={{ fontSize: 16, mr: 0.5, color: '#b0b0b0' }} />
                                     <Typography variant="caption" sx={{ color: '#b0b0b0' }}>
-                                        Music Lover
+                                        {isRoomCreator ? 'Room Creator' : 'Music Lover'}
                                     </Typography>
                                 </Box>
                                 <Typography variant="caption" sx={{ color: '#b0b0b0' }}>

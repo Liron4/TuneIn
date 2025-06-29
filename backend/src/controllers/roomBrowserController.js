@@ -115,7 +115,8 @@ exports.getRooms = async (req, res) => {
 
 exports.getRoomById = async (req, res) => {
   try {
-    const room = await Room.findById(req.params.roomId);
+    const room = await Room.findById(req.params.roomId)
+      .populate('creator', 'nickname profilePic');
     if (!room) {
       return res.status(404).json({ error: 'Room not found' });
     }

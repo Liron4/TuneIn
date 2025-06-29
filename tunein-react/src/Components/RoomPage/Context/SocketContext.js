@@ -10,7 +10,7 @@ export const useSocket = () => {
   return context;
 };
 
-export const SocketProvider = ({ children, newSocket, roomId }) => {
+export const SocketProvider = ({ children, newSocket, roomId, roomCreator}) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
@@ -49,7 +49,8 @@ export const SocketProvider = ({ children, newSocket, roomId }) => {
   const value = {
     newSocket,        // The actual socket instance
     isConnected,   // Connection status
-    roomId         // Room ID for convenience
+    roomId,         // Room ID for convenience
+    roomCreator    // Room creator for additional context
   };
 
   return (

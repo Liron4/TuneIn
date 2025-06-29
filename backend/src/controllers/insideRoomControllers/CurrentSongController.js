@@ -44,19 +44,16 @@ const SONG_TRANSITION_DELAY = 5000; // 5 seconds delay before playing the next s
 exports.playNextSong = async (roomId, io, source = 'unknown') => {
   console.log(`[playNextSong] Room ${roomId}: Triggered from "${source}"`);
 
+  // **COUNTDOWN PROTECTION**: Prevent multiple simultaneous playNextSong operations
+  if (roomsInCountdown.has(roomId)) {
+    console.log(`[playNextSong] Room ${roomId}: Countdown already active, ignoring new request from "${source}"`);
+    return;
+  }
+
   try {
     // Clear votes and timers
     LiveViewersController.clearRoomSkipVotes(roomId, source);
     clearAllRoomTimers(roomId);
-
-    // Reset skip votes for all clients
-    io.to(`room-${roomId}`).emit('skipVoteUpdate', {
-      skipCount: 0,
-      threshold: 0,
-      hasUserVoted: false,
-      reason: 'song_changed',
-      source: source
-    });
 
     // Get room and validate queue
     const room = await Room.findById(roomId);
@@ -93,8 +90,19 @@ exports.playNextSong = async (roomId, io, source = 'unknown') => {
       triggerSource: source
     };
 
-    // Mark countdown and emit with exact start time
+    // **RACE CONDITION FIX**: Update queue immediately and mark countdown
     roomsInCountdown.add(roomId);
+    await Room.findByIdAndUpdate(roomId, {
+      songqueue: updatedQueue
+    });
+
+    // Emit queue update immediately to prevent user interference
+    io.to(`room-${roomId}`).emit('queueUpdated', {
+      queue: updatedQueue,
+      source: source
+    });
+
+    // Mark countdown and emit with exact start time
     io.to(`room-${roomId}`).emit('nextSongCountdown', {
       countdown: SONG_TRANSITION_DELAY / 1000,
       nextSong: nextSong,
@@ -109,10 +117,9 @@ exports.playNextSong = async (roomId, io, source = 'unknown') => {
         // Clear countdown state immediately
         roomsInCountdown.delete(roomId);
 
-        // **MINIMAL OPERATIONS**: Use pre-calculated data
+        // **MINIMAL OPERATIONS**: Only update current song (queue already updated)
         await Room.findByIdAndUpdate(roomId, {
-          currentSong: songWithMetadata,
-          songqueue: updatedQueue
+          currentSong: songWithMetadata
         });
 
         // Emit with exact pre-calculated time
@@ -134,10 +141,7 @@ exports.playNextSong = async (roomId, io, source = 'unknown') => {
           source: source
         });
 
-        io.to(`room-${roomId}`).emit('queueUpdated', {
-          queue: updatedQueue,
-          source: source
-        });
+        // Note: queueUpdated already emitted earlier to prevent race conditions
 
         // **HANDLE POINTS**: Process points for previous song
         if (previousSong) {
@@ -149,7 +153,7 @@ exports.playNextSong = async (roomId, io, source = 'unknown') => {
 
         // **DRIFT-FREE DURATION TIMER**: Calculate from exact start time
         if (nextSong.duration) {
-          const songEndTime = exactStartTime + (nextSong.duration * 1000);
+          const songEndTime = exactStartTime + (nextSong.duration * 1000) + 1000; // Add 1 second buffer, so song doesn't cut off abruptly 
           const durationDelay = songEndTime - Date.now();
 
           const songDurationTimer = setTimeout(() => {

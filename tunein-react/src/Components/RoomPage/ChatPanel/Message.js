@@ -1,7 +1,8 @@
 import React from 'react';
 import { Box, Typography, Avatar } from '@mui/material';
+import VerifiedIcon from '@mui/icons-material/Verified';
 
-const Message = ({ message, onUsernameClick }) => {
+const Message = ({ message, onUsernameClick, showCreatorBadge }) => {
   // Format video timestamp
   const formatVideoTime = (seconds) => {
     if (!seconds && seconds !== 0) return null;
@@ -73,6 +74,17 @@ const Message = ({ message, onUsernameClick }) => {
             >
               {userName}
             </Typography>
+            
+            {/* Creator Badge */}
+            {showCreatorBadge && (
+              <VerifiedIcon 
+                sx={{ 
+                  color: '#1976d2', 
+                  fontSize: 12, 
+                  ml: 0.3 
+                }} 
+              />
+            )}
             
             {/* Video timestamp */}
             {message.videoTimestamp !== null && message.videoTimestamp !== undefined && (

@@ -15,6 +15,7 @@ exports.getProfile = async (req, res) => {
     
     // Return user data
     res.json({
+      userId: user._id,
       nickname: user.nickname,
       email: user.email,
       profilePic: user.profilePic,
@@ -41,6 +42,7 @@ exports.getUserProfileByUsername = async (req, res) => {
     
     // Return public user data (no email)
     res.json({
+      userId: user._id,
       nickname: user.nickname,
       profilePic: user.profilePic,
       genres: user.genres,

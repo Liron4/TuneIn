@@ -30,7 +30,7 @@ const ChatPanel = ({ roomId }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [selectedUsername, setSelectedUsername] = useState(null);
   const inputRef = useRef(null);
-  const { newSocket, isConnected } = useSocket();
+  const { newSocket, isConnected, roomCreator } = useSocket();
   const MAX_MESSAGES = 200;
 
   console.log('ChatPanel state:', {
@@ -64,6 +64,7 @@ const ChatPanel = ({ roomId }) => {
 
         // Map ProfileBar property names to ChatPanel expected names
         const profileData = {
+          userId: response.data.userId,
           username: response.data.nickname,           // Map nickname -> username
           profilePicture: response.data.profilePic,   // Map profilePic -> profilePicture
           genres: response.data.genres,
@@ -204,6 +205,9 @@ const ChatPanel = ({ roomId }) => {
     setSelectedUsername(null);
   };
 
+  // Check if current user is room creator
+  const isCurrentUserCreator = userProfile && roomCreator && userProfile.userId === roomCreator._id;
+
   return (
     <StyledChatContainer>
       {/* Header */}
@@ -228,7 +232,12 @@ const ChatPanel = ({ roomId }) => {
       </Box>
 
       {/* Messages */}
-      <MessageList messages={messages} onUsernameClick={handleUsernameClick} />
+      <MessageList 
+        messages={messages} 
+        onUsernameClick={handleUsernameClick} 
+        currentUserIsCreator={isCurrentUserCreator}
+        currentUsername={userProfile?.username}
+      />
 
       {/* Input */}
       <Box sx={{ p: 2, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
