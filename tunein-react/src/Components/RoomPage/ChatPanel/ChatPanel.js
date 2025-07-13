@@ -237,6 +237,7 @@ const ChatPanel = ({ roomId }) => {
         onUsernameClick={handleUsernameClick} 
         currentUserIsCreator={isCurrentUserCreator}
         currentUsername={userProfile?.username}
+        roomCreator={roomCreator}
       />
 
       {/* Input */}
