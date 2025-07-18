@@ -171,7 +171,6 @@ const CurrentSong = () => {
     }}>
 
       {/* Header section with SkipSong integration */}
-      {/* Header section with SkipSong integration */}
       <Box sx={{
         display: 'flex',
         justifyContent: 'space-between',

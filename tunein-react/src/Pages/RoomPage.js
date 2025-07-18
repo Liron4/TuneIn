@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Box, Typography, CircularProgress } from '@mui/material';
 import axios from 'axios';
-import LeftBar from '../Components/RoomPage/LeftBar/LeftBar';
+import LeftBar from '../Components/RoomPage/QueueBar/LeftBar';
 import { useNavigate } from 'react-router-dom';
 import CurrentSong from '../Components/RoomPage/CurrentSong/CurrentSong';
 import ChatPanel from '../Components/RoomPage/ChatPanel/ChatPanel';
