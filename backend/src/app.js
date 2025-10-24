@@ -72,7 +72,7 @@ SocketHandler.setupSocketHandlers(io);
 
 
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => server.listen(5000, () => console.log('Server running on port 5000'))) 
+  .then(() => server.listen(5000, '0.0.0.0', () => console.log('Server running on port 5000'))) 
   .catch(err => console.error(err));
 
 // to future add: initalize playback service.
