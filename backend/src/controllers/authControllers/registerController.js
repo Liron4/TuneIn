@@ -1,37 +1,11 @@
 const User = require('../../models/User');
 const bcrypt = require('bcryptjs');
-const axios = require('axios');
-const FormData = require('form-data');
+const { uploadToImgur } = require('../../utils/imgurUploader');
 
 function parseGenres(genresStr) {
   return genresStr
     ? genresStr.split(',').map(g => g.replace('#', '').trim()).filter(Boolean)
     : [];
-}
-
-// Function to upload image to Imgur
-async function uploadToImgur(imageBuffer) {
-  try {
-    // Create form data for Imgur API
-    const formData = new FormData();
-    formData.append('image', imageBuffer.toString('base64'));
-    
-    const response = await axios.post('https://api.imgur.com/3/image', formData, {
-      headers: {
-        Authorization: `Client-ID ${process.env.IMGUR_CLIENT_ID}`,
-        ...formData.getHeaders()
-      }
-    });
-    
-    if (response.data.success) {
-      return response.data.data.link;
-    } else {
-      throw new Error('Failed to upload image to Imgur');
-    }
-  } catch (error) {
-    console.error('Imgur upload error:', error?.response?.data || error.message);
-    throw new Error('Failed to upload image to Imgur');
-  }
 }
 
 exports.register = async (req, res) => {

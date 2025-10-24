@@ -3,7 +3,10 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const http = require('http');
 const socketIo = require('socket.io');
+const session = require('express-session');
+const passport = require('passport');
 require('dotenv').config();
+require('./config/passport');
 
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
@@ -18,11 +21,21 @@ const SocketHandler = require('./controllers/insideRoomControllers/VotingSystem/
 
 const app = express();
 app.use(cors({
-  origin: '*',  // Allow all origins during development
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',  // Specific origin required for credentials
   credentials: true
 }));
 
 app.use(express.json());
+
+// Session and Passport middleware
+app.use(session({
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: process.env.NODE_ENV === 'production' }
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/rooms', roomRoutes);
