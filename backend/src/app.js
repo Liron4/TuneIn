@@ -21,7 +21,8 @@ const SocketHandler = require('./controllers/insideRoomControllers/VotingSystem/
 
 const app = express();
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',  // Specific origin required for credentials
+  // Allow all origins for now by reflecting the request origin (works with credentials: true)
+  origin: true,
   credentials: true
 }));
 
