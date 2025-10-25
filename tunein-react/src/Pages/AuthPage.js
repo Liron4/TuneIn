@@ -1,8 +1,10 @@
 import { useState } from "react";
 import Login from "../Components/AuthPage/Login";
 import Register from "../Components/AuthPage/Register";
+import PopUpMessage from "../Components/AuthPage/PopUpMessage";
 import { Box, Button, ButtonGroup, Paper, Container, Divider, Typography } from "@mui/material";
 import GoogleIcon from '@mui/icons-material/Google';
+import tuneInLogo from "../logo.png";
 
 export default function AuthPage({onAuthSuccess}) {
   const [isLogin, setIsLogin] = useState(true);
@@ -13,13 +15,21 @@ export default function AuthPage({onAuthSuccess}) {
 
   return (
     <Box
-      minHeight="100vh"
+      minHeight="90vh"
       display="flex"
       alignItems="center"
       justifyContent="center"
-      bgcolor="#f3f4f6"
+      bgcolor="#ffffffff"
     >
+      <PopUpMessage />
       <Container maxWidth="xs">
+        <Box mb={-8} display="flex" justifyContent="center">
+          <img 
+            src={tuneInLogo} 
+            alt="TuneIn Logo" 
+            style={{ maxWidth: '400px', width: '100%' }}
+          />
+        </Box>
         <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
           <Box mb={2} display="flex" justifyContent="center">
             <ButtonGroup fullWidth>
