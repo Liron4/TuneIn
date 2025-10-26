@@ -21,8 +21,10 @@ const SocketHandler = require('./controllers/insideRoomControllers/VotingSystem/
 
 const app = express();
 app.use(cors({
-  origin: '*',
-  credentials: false
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
@@ -58,8 +60,9 @@ const server = http.createServer(app);
 // Setup Socket.IO with CORS
 const io = socketIo(server, {
   cors: {
-    origin: '*',  // Allow all origins
-    methods: ["GET", "POST", "PUT", "DELETE"]
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
   }
 });
 
