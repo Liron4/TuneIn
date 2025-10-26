@@ -28,7 +28,10 @@ exports.login = async (req, res) => {
       { expiresIn: '7d' }
     );
 
-    res.json({
+    // Determine the request origin (what the backend sees from the incoming request)
+    const requestOrigin = req.get('origin') || req.headers.referer || `${req.protocol}://${req.get('host')}`;
+
+    const response = {
       token,
       user: {
         userId: user._id,
@@ -36,8 +39,14 @@ exports.login = async (req, res) => {
         nickname: user.nickname,
         genres: user.genres,
         profilePic: user.profilePic
-      }
-    });
+      },
+      // Expose the origin so frontend can log and verify what the backend received
+      requestOrigin
+    };
+
+    console.log('Login successful. Request origin seen by backend:', requestOrigin);
+    console.log('Login response payload:', JSON.stringify(response, null, 2));
+    res.json(response);
   } catch (err) {
     console.error('Login error:', err);
     const response = {

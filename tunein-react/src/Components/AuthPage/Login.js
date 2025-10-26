@@ -18,14 +18,43 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login`, { email, password });
+      const res = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/auth/login`, 
+        { email, password },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('Login response:', res.data); // Debug log
+
+      // Validate response structure
+      if (!res.data || !res.data.token) {
+        throw new Error('Invalid response: missing token');
+      }
+
+      if (!res.data.user || !res.data.user.userId) {
+        throw new Error('Invalid response: missing user data');
+      }
+
       login(res.data.token, res.data.user.userId);
       setMsg("Login successful!");
       setTimeout(() => {
         navigate("/home");
       }, 500);
     } catch (err) {
-      setMsg(err.response?.data?.message || "Login failed");
+      console.error('Login error:', err); // Debug log
+      console.error('Error response:', err.response); // Debug log
+      
+      if (err.response?.data?.message) {
+        setMsg(err.response.data.message);
+      } else if (err.message) {
+        setMsg(err.message);
+      } else {
+        setMsg("Login failed - please try again");
+      }
       setIsLoading(false);
     }
   };
