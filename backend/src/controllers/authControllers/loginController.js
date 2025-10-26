@@ -3,9 +3,12 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 exports.login = async (req, res) => {
+  const requestOrigin = req.get('origin') || req.headers.referer || 'no-origin';
+  console.log('🔵 Login request from origin:', requestOrigin);
+  console.log('🔵 Request body:', JSON.stringify(req.body));
+  console.log('🔵 Content-Type:', req.get('content-type'));
+  
   try {
-    console.log("Logging in user...");
-
     if (!process.env.JWT_SECRET) {
       throw new Error('JWT_SECRET is not set in environment variables.');
     }
@@ -13,14 +16,21 @@ exports.login = async (req, res) => {
 
     const { email, password } = req.body;
     if (!email || !password) {
+      console.log('❌ Missing credentials from:', requestOrigin);
       return res.status(400).json({ message: 'Email and password required.' });
     }
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: 'Invalid credentials.' });
+    if (!user) {
+      console.log('❌ User not found:', email, '| from:', requestOrigin);
+      return res.status(400).json({ message: 'Invalid credentials.' });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials.' });
+    if (!isMatch) {
+      console.log('❌ Password mismatch for:', email, '| from:', requestOrigin);
+      return res.status(400).json({ message: 'Invalid credentials.' });
+    }
 
     const token = jwt.sign(
       { userId: user._id, email: user.email },
@@ -44,11 +54,10 @@ exports.login = async (req, res) => {
       requestOrigin
     };
 
-    console.log('Login successful. Request origin seen by backend:', requestOrigin);
-    console.log('Login response payload:', JSON.stringify(response, null, 2));
+    console.log('✅ Login successful from:', requestOrigin);
     res.json(response);
   } catch (err) {
-    console.error('Login error:', err);
+    console.error('❌ Login failed from:', requestOrigin, '| Error:', err.message);
     const response = {
       message: err && err.message ? err.message : 'Server error.',
       stack: err && err.stack ? err.stack : null

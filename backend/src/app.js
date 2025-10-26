@@ -30,14 +30,17 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
+    console.log('🔍 CORS check - Origin:', origin, '| Allowed:', allowedOrigins);
+    
     // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
     
     if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*')) {
+      console.log('✅ CORS allowed for origin:', origin);
       callback(null, true);
     } else {
-      console.warn('CORS blocked origin:', origin);
-      callback(null, true); // Allow anyway for debugging - remove in production
+      console.error('❌ CORS BLOCKED origin:', origin);
+      callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
@@ -71,6 +74,23 @@ app.get('/api/server-info', (req, res) => {
     apiUrl: req.protocol + '://' + req.get('host'),
     socketUrl: req.protocol + '://' + req.get('host'),
     timestamp: Date.now()
+  });
+});
+
+// Debug endpoint to check CORS and headers
+app.get('/api/debug/headers', (req, res) => {
+  res.json({
+    origin: req.get('origin'),
+    referer: req.headers.referer,
+    host: req.get('host'),
+    userAgent: req.get('user-agent'),
+    allHeaders: req.headers,
+    allowedOrigins: [
+      'http://localhost:3000',
+      'https://tunein--frontend--gs82jsxjhjwv.code.run',
+      process.env.FRONTEND_URL
+    ].filter(Boolean),
+    frontendUrlEnv: process.env.FRONTEND_URL
   });
 });
 
