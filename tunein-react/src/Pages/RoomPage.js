@@ -115,10 +115,16 @@ const RoomPage = () => {
         {/* Main content area */}
         <Box sx={{
           width: '100%',
-          height: '100vh',
+          height: {
+            xs: '100dvh',  // Dynamic viewport height for mobile (accounts for browser UI)
+            sm: '100dvh',  // Dynamic viewport height for small devices
+            md: '100vh',   // Standard viewport height for tablets and up
+            lg: '100vh',
+            xl: '100vh'
+          },
           padding: {
-            xs: '6px 6px 6px 50px',    // Mobile: Space only for toggle button
-            sm: '8px 8px 8px 50px',    // Small: Space only for toggle button
+            xs: '4px 4px 4px 50px',    // Mobile: Reduced padding for more space
+            sm: '6px 6px 6px 50px',    // Small: Space only for toggle button
             md: '12px',                // Medium: No reserved space
             lg: '16px',                // Large: No reserved space
             xl: '20px 40px 20px 20px'  // XL: Extra right padding for ChatPanel spacing
@@ -159,8 +165,8 @@ const RoomPage = () => {
               xl: 'row'        // Desktops: Side by side
             },
             gap: { // Gap between components
-              xs: 0.5,   
-              sm: 0.75,  
+              xs: 0.25,  // Minimal gap on mobile to maximize space
+              sm: 0.5,   // Small gap on small devices
               md: 1,    
               lg: 4,     
               xl: 5      
@@ -179,15 +185,24 @@ const RoomPage = () => {
                 lg: '1 1 60%',         // Large: 60% width
                 xl: '1 1 65%'          // XL: 65% width
               },
-              minHeight: 0,
+              minHeight: {
+                xs: 0,                 // Allow flex shrinking on mobile
+                sm: 0,
+                md: 0,
+                lg: 0,
+                xl: 0
+              },
               height: {
-                xs: '62%',             // Mobile: Slightly more space
-                sm: '65%',             // Small: 65% of container height
-                md: '70%',             // Medium: 70% of container height
+                xs: '58%',             // Mobile: Reduced to give ChatPanel more reliable space
+                sm: '62%',             // Small: Adjusted
+                md: '68%',             // Medium: Adjusted
                 lg: '100%',            // Large: Full height (side by side)
                 xl: '100%'             // XL: Full height (side by side)
               },
               maxHeight: {
+                xs: '58%',             // Enforce max height on mobile
+                sm: '62%',             // Enforce max height on small
+                md: '68%',             // Enforce max height on medium
                 lg: 'calc(100vh - 32px)',  // Account for padding on desktop
                 xl: 'calc(100vh - 40px)'   // Account for padding on large desktop
               },
@@ -230,15 +245,24 @@ const RoomPage = () => {
                 lg: '0 0 40%',         // Large: 40% width
                 xl: '0 0 35%'          // XL: 35% width
               },
-              minHeight: 0,
+              minHeight: {
+                xs: '250px',           // Ensure minimum usable height on mobile
+                sm: '280px',           // Ensure minimum usable height on small
+                md: '300px',           // Ensure minimum usable height on medium
+                lg: 0,
+                xl: 0
+              },
               height: {
-                xs: '38%',             // Mobile: Adjusted for gap reduction
-                sm: '35%',             // Small: 35% of container height  
-                md: '30%',             // Medium: 30% of container height
+                xs: '42%',             // Mobile: Increased to prevent cutoff
+                sm: '38%',             // Small: Adjusted
+                md: '32%',             // Medium: Adjusted
                 lg: '100%',            // Large: Full height (side by side)
                 xl: '100%'             // XL: Full height (side by side)
               },
               maxHeight: {
+                xs: '42%',             // Enforce max height on mobile
+                sm: '38%',             // Enforce max height on small
+                md: '32%',             // Enforce max height on medium
                 lg: 'calc(100vh - 32px)',  // Account for padding on desktop
                 xl: 'calc(100vh - 40px)'   // Account for padding on large desktop
               },

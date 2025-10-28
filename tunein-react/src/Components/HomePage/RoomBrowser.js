@@ -182,11 +182,11 @@ const RoomBrowser = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', mb: 3, position: 'relative' }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'center', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" component="h1" sx={{ flex: 1, textAlign: 'center' }}>
           Music Rooms
         </Typography>
-        <Box sx={{ position: 'absolute', right: 0 }}>
+        <Box sx={{ ml: { sm: 'auto' }, mt: { xs: 1, sm: 0 } }}>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
