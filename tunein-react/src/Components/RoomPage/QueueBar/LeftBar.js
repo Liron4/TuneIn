@@ -10,32 +10,31 @@ const LeftBar = ({ roomName }) => {
 
   return (
     <>
-      {/* Fixed Toggle Button - FIXED: Always visible, positioned correctly */}
-      <IconButton
-        onClick={() => setVisible(v => !v)}
-        sx={{
-          position: 'fixed',
-          left: visible ? { 
-            xs: '240px',  // Top right of mobile sidebar
-            md: '260px'   // Top right of desktop sidebar
-          } : '10px',     // Left edge when closed
-          top: '15px',
-          backgroundColor: 'rgba(33,33,33,0.97)',
-          color: 'white',
-          zIndex: 1300,   // Higher z-index to stay above sidebar
-          borderRadius: '50%',
-          boxShadow: 2,
-          transition: 'left 0.3s ease-in-out',
-          '&:hover': {
-            backgroundColor: 'rgba(33,33,33,1)',
-          }
-        }}
-        size="small"
-      >
-        {visible ? <CloseIcon /> : <MenuIcon />}
-      </IconButton>
+        <IconButton
+          onClick={() => setVisible(v => !v)}
+          sx={{
+            position: 'fixed',
+            left: visible ? { 
+          xs: '240px',  // Top right of mobile sidebar
+          md: '260px'   // Top right of desktop sidebar
+            } : '10px',     // Left edge when closed
+            top: '5px',     // Slightly higher
+            backgroundColor: 'rgba(33,33,33,0.97)',
+            color: 'white',
+            zIndex: 1300,   // Higher z-index to stay above sidebar
+            borderRadius: '50%',
+            boxShadow: 2,
+            transition: 'left 0.3s ease-in-out',
+            '&:hover': {
+          backgroundColor: 'rgba(33,33,33,1)',
+            }
+          }}
+          size="small"
+        >
+          {visible ? <CloseIcon sx={{ left: '500px', paddingLeft: 3, paddingRight: 0 }} /> : <MenuIcon />}
+        </IconButton>
 
-      {/* Sidebar - responsive behavior */}
+        {/* Sidebar - responsive behavior */}
       <Box sx={{
         position: 'fixed',
         left: 0,
@@ -64,33 +63,33 @@ const LeftBar = ({ roomName }) => {
         transform: visible ? 'translateX(0)' : 'translateX(-100%)',
       }}>
         
-        {/* FIXED: Room Name Header - now inside the sidebar */}
-        <Box sx={{ 
-          width: '100%', 
-          pt: 0, 
-          pb: 2, 
-          borderBottom: '1px solid rgba(255,255,255,0.1)',
-          mb: 2
-        }}>
-          <Typography
-            variant="h6"
-            sx={{
-              color: 'white',
-              fontWeight: 'bold',
-              textAlign: 'center',
-              fontSize: { 
-                xs: '1rem',    // Smaller font on mobile
-                md: '1.25rem'  // Normal font on desktop
-              },
-              // Add some padding to avoid overlap with close button
-              pr: 4
-            }}
-          >
-            {roomName || 'Loading...'}
-          </Typography>
-        </Box>
+          <Box sx={{ 
+            width: '100%', 
+            pt: 0, 
+            pb: 2, 
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            mb: 2
+          }}>
+            <Typography
+              variant="h6"
+              sx={{
+                color: 'white',
+                fontWeight: 'bold',
+                textAlign: 'center',
+                fontSize: { 
+            xs: '1rem',    // Smaller font on mobile
+            md: '1.25rem'  // Normal font on desktop
+                },
+                // Add some padding to avoid overlap with close button
+                pr: 4,
+                pt: 0  // Added padding-top to make it slightly higher
+              }}
+            >
+              {roomName || 'Loading...'}
+            </Typography>
+          </Box>
 
-        {/* Content */}
+          {/* Content */}
         <Box
           sx={{
             width: '100%',
