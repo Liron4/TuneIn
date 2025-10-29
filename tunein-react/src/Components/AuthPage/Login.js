@@ -18,10 +18,6 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      console.log('🔵 Login attempt started');
-      console.log('🔵 API URL:', process.env.REACT_APP_API_URL);
-      console.log('🔵 Frontend origin:', window.location.origin);
-      
       const res = await axios.post(
         `${process.env.REACT_APP_API_URL}/api/auth/login`, 
         { email, password },
@@ -32,21 +28,8 @@ export default function Login() {
         }
       );
 
-      console.log('✅ Login response received:', res.data);
-      console.log('✅ Backend saw origin:', res.data.requestOrigin);
-      console.log('✅ Response status:', res.status);
-      console.log('✅ Full response object:', res);
-
-      // Validate response structure
-      if (!res.data || !res.data.token) {
-        console.error('❌ Missing token in response');
-        throw new Error('Invalid response: missing token');
-      }
-
-      if (!res.data.user || !res.data.user.userId) {
-        console.error('❌ Missing user data in response');
-        console.error('❌ res.data.user:', res.data.user);
-        throw new Error('Invalid response: missing user data');
+      if (!res.data || !res.data.token || !res.data.user || !res.data.user.userId) {
+        throw new Error('Invalid response from server');
       }
 
       login(res.data.token, res.data.user.userId);
@@ -55,12 +38,7 @@ export default function Login() {
         navigate("/home");
       }, 500);
     } catch (err) {
-      console.error('❌ Login error:', err);
-      console.error('❌ Error response:', err.response);
-      console.error('❌ Error response data:', err.response?.data);
-      console.error('❌ Error response status:', err.response?.status);
-      console.error('❌ Error response headers:', err.response?.headers);
-      console.error('❌ Error message:', err.message);
+      console.error('Login error:', err);
       
       if (err.response?.data?.message) {
         setMsg(err.response.data.message);

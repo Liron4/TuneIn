@@ -161,12 +161,8 @@ const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
         }
     }, [apiLoaded, videoId, initializePlayer]);
 
-    // Handle seek when startTime changes but videoId doesn't
-    useEffect(() => {
-        if (playerReady && youtubePlayerRef.current && typeof youtubePlayerRef.current.seekTo === 'function') {
-            youtubePlayerRef.current.seekTo(startTime);
-        }
-    }, [startTime, playerReady]);
+    // **BUG FIX #2**: Removed seek effect - startTime should only be used on initial load
+    // The player will naturally continue from where it started
 
     // Clean up the player when component unmounts
     useEffect(() => {

@@ -8,6 +8,7 @@ const passport = require('passport');
 require('dotenv').config();
 require('./config/passport');
 
+const rootRoute = require('./routes/rootRoute');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
 const roomRoutes = require('./routes/roomBrowserRoutes');
@@ -24,22 +25,18 @@ const app = express();
 // Dynamic CORS configuration for production
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://tunein--frontend--gs82jsxjhjwv.code.run',
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
 app.use(cors({
   origin: function (origin, callback) {
-    console.log('🔍 CORS check - Origin:', origin, '| Allowed:', allowedOrigins);
-    
     // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1 || allowedOrigins.includes('*')) {
-      console.log('✅ CORS allowed for origin:', origin);
+    if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      console.error('❌ CORS BLOCKED origin:', origin);
+      console.warn('CORS blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -60,6 +57,8 @@ app.use(session({
 }));
 app.use(passport.initialize());
 app.use(passport.session());
+
+// API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/rooms', roomRoutes);
@@ -77,22 +76,8 @@ app.get('/api/server-info', (req, res) => {
   });
 });
 
-// Debug endpoint to check CORS and headers
-app.get('/api/debug/headers', (req, res) => {
-  res.json({
-    origin: req.get('origin'),
-    referer: req.headers.referer,
-    host: req.get('host'),
-    userAgent: req.get('user-agent'),
-    allHeaders: req.headers,
-    allowedOrigins: [
-      'http://localhost:3000',
-      'https://tunein--frontend--gs82jsxjhjwv.code.run',
-      process.env.FRONTEND_URL
-    ].filter(Boolean),
-    frontendUrlEnv: process.env.FRONTEND_URL
-  });
-});
+// Root route - must be last to not interfere with API routes
+app.use('/', rootRoute);
 
 const server = http.createServer(app);
 

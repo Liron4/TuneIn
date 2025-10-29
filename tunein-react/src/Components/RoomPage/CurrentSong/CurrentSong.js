@@ -6,6 +6,7 @@ import MediaPlayer from './MediaPlayer';
 import SongWidget from './SongWidget';
 import { useSocket } from '../Context/SocketContext';
 import SkipSong from './SkipSong/SkipSong';
+import CountDownMessage from './CountDownMessage';
 
 
 
@@ -14,9 +15,8 @@ const CurrentSong = () => {
   const [serverTimeDiff, setServerTimeDiff] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [countdown, setCountdown] = useState(null);
-  const [nextSongInfo, setNextSongInfo] = useState(null);
-  const countdownRef = useRef(null);
+  const [countdownData, setCountdownData] = useState(null);
+  const initialStartTimeRef = useRef(0); // **BUG FIX #2**: Store initial start time
   const { newSocket, roomId, isConnected } = useSocket();
 
   useEffect(() => {
@@ -38,8 +38,14 @@ const CurrentSong = () => {
         const diff = serverTime - clientTime;
         setServerTimeDiff(diff);
 
+        // **BUG FIX #2**: Calculate and store initial elapsed time
+        const now = Date.now() + diff;
+        const elapsed = Math.floor((now - data.currentSong.startTime) / 1000);
+        initialStartTimeRef.current = elapsed;
+
         setCurrentSong(data.currentSong);
-        setCountdown(null);
+        // **BUG FIX #1**: Clear countdown with explicit null timestamp to force update
+        setCountdownData({ countdown: 0, nextSong: null, clear: Date.now() });
       } else {
         setCurrentSong(null);
       }
@@ -48,23 +54,12 @@ const CurrentSong = () => {
     // Listen for countdown updates
     newSocket.on('nextSongCountdown', (data) => {
       console.log('Received countdown event:', data);
-      setCountdown(data.countdown);
-      setNextSongInfo(data.nextSong);
-
-      if (countdownRef.current) {
-        clearInterval(countdownRef.current);
-      }
-
-      let secondsLeft = data.countdown;
-      countdownRef.current = setInterval(() => {
-        secondsLeft -= 1;
-        setCountdown(secondsLeft);
-
-        if (secondsLeft <= 0) {
-          clearInterval(countdownRef.current);
-          countdownRef.current = null;
-        }
-      }, 1000);
+      // **BUG FIX #1**: Pass countdown data to separate component
+      // This prevents re-rendering CurrentSong and MediaPlayer
+      setCountdownData({
+        countdown: data.countdown,
+        nextSong: data.nextSong
+      });
     });
 
     // Cleanup listeners
@@ -72,9 +67,6 @@ const CurrentSong = () => {
       if (newSocket) {
         newSocket.off('currentSongUpdated');
         newSocket.off('nextSongCountdown');
-      }
-      if (countdownRef.current) {
-        clearInterval(countdownRef.current);
       }
     };
   }, [newSocket, roomId]); // Dependencies: re-run when socket or roomId changes
@@ -102,6 +94,11 @@ const CurrentSong = () => {
           const clientTime = Date.now();
           const diff = serverTime - clientTime;
           setServerTimeDiff(diff);
+
+          // **BUG FIX #2**: Calculate and store initial elapsed time
+          const now = Date.now() + diff;
+          const elapsed = Math.floor((now - response.data.currentSong.startTime) / 1000);
+          initialStartTimeRef.current = elapsed;
 
           setCurrentSong(response.data.currentSong);
         }
@@ -214,32 +211,22 @@ const CurrentSong = () => {
         </Typography>
       )}
 
-      {/* Rest of the component remains the same */}
+      {/* Song progress widget */}
       <SongWidget
         key={currentSong?.startTime || 'no-song'} // Force re-mount for duplicate songs
         currentSong={currentSong}
         getElapsedSeconds={getElapsedSeconds}
       />
 
-      {countdown !== null && countdown > 0 && (
-        <Box sx={{ p: { xs: 2, md: 3 }, textAlign: 'center', bgcolor: 'rgba(29, 185, 84, 0.2)', borderRadius: 2, mb: 2 }}>
-          <Typography variant="h6" sx={{ color: 'white', fontSize: { xs: '1rem', md: '1.25rem' } }}>
-            Next song in {countdown}...
-          </Typography>
-          {nextSongInfo && (
-            <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)', mt: 1, fontSize: { xs: '0.875rem', md: '1rem' } }}>
-              Coming up: {nextSongInfo.title}
-            </Typography>
-          )}
-        </Box>
-      )}
+      {/* **BUG FIX #1**: Isolated countdown component prevents parent re-renders */}
+      <CountDownMessage countdownData={countdownData} />
 
       {currentSong ? (
         <Paper sx={{ p: { xs: 1.5, md: 2 }, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.4)', maxWidth: '100%', overflow: 'hidden' }}>
           <MediaPlayer
-            key={currentSong.startTime} // Force re-mount for duplicate songs
+            key={`${currentSong.id}-${currentSong.startTime}`} // **BUG FIX #1**: Use combined key to only remount when song actually changes
             videoId={currentSong.id}
-            startTime={getElapsedSeconds()}
+            startTime={initialStartTimeRef.current} // **BUG FIX #2**: Use stable initial start time
             songData={currentSong}
           />
 
