@@ -1,90 +1,34 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Box } from '@mui/material';
+import RadioModeControl from './RadioModeControl';
 
-const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
+const MediaPlayer = ({ videoId, startTime = 0, songData, isRadioMode, setIsRadioMode, audioContextRef }) => {
     const playerRef = useRef(null);
     const youtubePlayerRef = useRef(null);
+    const [playerInstance, setPlayerInstance] = useState(null);
     const [playerReady, setPlayerReady] = useState(false);
     const [apiLoaded, setApiLoaded] = useState(!!window.YT);
-    const initializationRef = useRef(false);
+    const isInitialLoadRef = useRef(true);
 
-    // Create a stable initialization function with useCallback
-    const initializePlayer = useCallback(() => {
-        // Prevent double initialization
-        if (initializationRef.current || !videoId) return;
+    // Handle NEW songs (videoId prop changes)
+    useEffect(() => {
+        if (!playerInstance || !videoId) return;
 
-        if (!window.YT || !window.YT.Player) {
-            console.log('YouTube API not ready yet');
-            return; // The API onReady callback will handle initialization
+        // Don't run this on the *first* load, as the player is already
+        // being created with this videoId.
+        if (isInitialLoadRef.current) {
+            isInitialLoadRef.current = false;
+            return;
         }
 
-        console.log('Initializing player for video:', videoId);
-        initializationRef.current = true;
+        console.log('🎵 New videoId prop received. Loading new video:', videoId);
+        playerInstance.loadVideoById({
+            videoId: videoId,
+            startSeconds: 0 // New songs should start at 0
+        });
+        console.log('📺 loadVideoById called - new video element will be created');
 
-        try {
-            // Reuse existing player when possible
-            if (youtubePlayerRef.current) {
-                console.log('Loading new video in existing player');
-                youtubePlayerRef.current.loadVideoById({
-                    videoId: videoId,
-                    startSeconds: startTime
-                });
-
-                // Ensure player is ready and playing
-                youtubePlayerRef.current.playVideo();
-                setPlayerReady(true);
-                return;
-            }
-
-            // Create new player instance
-            console.log('Creating new YouTube player instance');
-            youtubePlayerRef.current = new window.YT.Player(playerRef.current, {
-                height: '100%',
-                width: '100%',
-                videoId: videoId,
-                playerVars: {
-                    autoplay: 1,
-                    controls: 1,
-                    disablekb: 0,
-                    fs: 0,
-                    rel: 0,
-                    start: startTime || 0,
-                    modestbranding: 1,
-                    playsinline: 1,
-                    mute: 0
-                },
-                events: {
-                    onReady: (event) => {
-                        console.log('YouTube player ready');
-                        setPlayerReady(true);
-
-                        // Force autoplay
-                        try {
-                            event.target.unMute();
-                            event.target.playVideo();
-
-                            if (startTime > 0) {
-                                event.target.seekTo(startTime);
-                            }
-                        } catch (err) {
-                            console.error('Error starting playback:', err);
-                        }
-                    },
-                    onStateChange: (event) => {
-                        if (event.data === window.YT.PlayerState.ENDED) {
-                            console.log('Video ended (via player event)');
-                        }
-                    },
-                    onError: (event) => {
-                        console.error('YouTube player error:', event.data);
-                    }
-                }
-            });
-        } catch (err) {
-            console.error('Error initializing YouTube player:', err);
-            initializationRef.current = false; // Reset flag to allow retry
-        }
-    }, [videoId, startTime]);
+    }, [videoId, playerInstance]);
 
     // ADDED: Global function to get current time from any component
     useEffect(() => {
@@ -148,51 +92,93 @@ const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
         };
     }, []);
 
-    // Reset initialization flag when video changes
+    // This effect handles the *initial* player creation
     useEffect(() => {
-        initializationRef.current = false;
-        setPlayerReady(false);
-    }, [videoId]);
-
-    // Initialize player when API is loaded and we have a videoId
-    useEffect(() => {
-        if (apiLoaded && videoId) {
-            initializePlayer();
+        // Ensure API is loaded
+        if (!window.YT || !window.YT.Player || !apiLoaded) {
+            console.log('YouTube API not ready yet');
+            return;
         }
-    }, [apiLoaded, videoId, initializePlayer]);
 
-    // **BUG FIX #2**: Removed seek effect - startTime should only be used on initial load
-    // The player will naturally continue from where it started
+        if (youtubePlayerRef.current) {
+            youtubePlayerRef.current.destroy();
+        }
 
-    // Clean up the player when component unmounts
-    useEffect(() => {
+        isInitialLoadRef.current = true; // Set flag for initial load
+
+        console.log('Creating new YouTube player instance');
+        youtubePlayerRef.current = new window.YT.Player(playerRef.current, {
+            height: '100%',
+            width: '100%',
+            videoId: videoId, // Load the first video
+            playerVars: {
+                autoplay: 1,
+                controls: 1,
+                disablekb: 0,
+                fs: 0,
+                rel: 0,
+                start: startTime || 0, // Use startTime ONLY for initial load
+                modestbranding: 1,
+                playsinline: 1,
+                mute: 0
+            },
+            events: {
+                onReady: (event) => {
+                    console.log('YouTube player ready');
+                    setPlayerReady(true);
+                    setPlayerInstance(event.target); // Save the player to state
+                    event.target.playVideo();
+                },
+                onStateChange: (event) => {
+                    if (event.data === window.YT.PlayerState.ENDED) {
+                        console.log('Video ended (via player event)');
+                    }
+                },
+                onError: (event) => {
+                    console.error('YouTube player error:', event.data);
+                }
+            }
+        });
+
+        // Cleanup on unmount
         return () => {
             if (youtubePlayerRef.current) {
                 youtubePlayerRef.current.destroy();
                 youtubePlayerRef.current = null;
-                initializationRef.current = false;
             }
+            setPlayerInstance(null);
+            setPlayerReady(false);
         };
-    }, []);
+    }, [apiLoaded]); // This effect runs only once when API is loaded
 
     return (
-        <Box
-            sx={{
-                position: 'relative',
-                paddingTop: '56.25%', // 16:9 aspect ratio
-                overflow: 'hidden',
-                borderRadius: 1
-            }}
-        >
+        <Box>
             <Box
-                ref={playerRef}
                 sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%'
+                    position: 'relative',
+                    paddingTop: '56.25%', // 16:9 aspect ratio
+                    overflow: 'hidden',
+                    borderRadius: 1
                 }}
+            >
+                <Box
+                    ref={playerRef}
+                    sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%'
+                    }}
+                />
+            </Box>
+            
+            {/* Render the RadioModeControl child and pass it the live, stable player instance */}
+            <RadioModeControl 
+                player={playerInstance} 
+                isRadioMode={isRadioMode}
+                setIsRadioMode={setIsRadioMode}
+                audioContextRef={audioContextRef}
             />
         </Box>
     );
