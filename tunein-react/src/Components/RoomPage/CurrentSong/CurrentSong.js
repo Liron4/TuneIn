@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Typography, Paper, Button, Chip, IconButton } from '@mui/material';
-import SkipNextIcon from '@mui/icons-material/SkipNext';
+import { Box, Typography, Paper, Chip } from '@mui/material';
 import RadioIcon from '@mui/icons-material/Radio';
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
 import axios from 'axios';
@@ -242,34 +241,59 @@ const CurrentSong = () => {
       {/* **BUG FIX #1**: Isolated countdown component prevents parent re-renders */}
       <CountDownMessage countdownData={countdownData} />
 
-      {currentSong ? (
-        <Paper sx={{ p: { xs: 1.5, md: 2 }, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.4)', maxWidth: '100%', overflow: 'hidden' }}>
-          <MediaPlayer
-            videoId={currentSong.id}
-            startTime={initialStartTimeRef.current}
-            songData={currentSong}
-            isRadioMode={isRadioMode}
-            setIsRadioMode={setIsRadioMode}
-            audioContextRef={audioContextRef}
-          />
+      <Paper
+        sx={{
+          p: { xs: 1.5, md: 2 },
+          borderRadius: 2,
+          bgcolor: 'rgba(0,0,0,0.4)',
+          maxWidth: '100%',
+          overflow: 'hidden',
+          display: currentSong ? 'block' : 'none'
+        }}
+      >
+        <MediaPlayer
+          videoId={currentSong?.id || null}
+          startTime={currentSong ? initialStartTimeRef.current : 0}
+          songData={currentSong}
+          isRadioMode={isRadioMode}
+          setIsRadioMode={setIsRadioMode}
+          audioContextRef={audioContextRef}
+        />
 
+        {currentSong && (
           <Box sx={{ mt: { xs: 1.5, md: 2 } }}>
-            <Box sx={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'flex-start',
-              gap: 1,
-              flexWrap: 'wrap'
-            }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                gap: 1,
+                flexWrap: 'wrap'
+              }}
+            >
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 500, fontSize: { xs: '0.9rem', md: '1rem' }, lineHeight: 1.3 }}>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    color: 'white',
+                    fontWeight: 500,
+                    fontSize: { xs: '0.9rem', md: '1rem' },
+                    lineHeight: 1.3
+                  }}
+                >
                   {currentSong.title}
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: { xs: '0.8rem', md: '0.875rem' } }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: 'rgba(255,255,255,0.7)',
+                    fontSize: { xs: '0.8rem', md: '0.875rem' }
+                  }}
+                >
                   Added by: {currentSong.addedby}
                 </Typography>
               </Box>
-              
+
               {/* Radio Mode Toggle - Elegant Chip Style */}
               <Chip
                 icon={isRadioMode ? <RadioButtonCheckedIcon /> : <RadioIcon />}
@@ -287,7 +311,7 @@ const CurrentSong = () => {
                   cursor: 'pointer',
                   '&:hover': {
                     bgcolor: isRadioMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255,255,255,0.15)',
-                    transform: 'scale(1.05)',
+                    transform: 'scale(1.05)'
                   },
                   '& .MuiChip-icon': {
                     color: isRadioMode ? '#4caf50' : 'rgba(255,255,255,0.7)',
@@ -298,29 +322,86 @@ const CurrentSong = () => {
               />
             </Box>
           </Box>
-        </Paper>
-      ) : (
-        <Box sx={{ p: { xs: 3, md: 4 }, textAlign: 'center', bgcolor: 'rgba(0,0,0,0.2)', borderRadius: 2, position: 'relative' }}>
-          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: { xs: '0.9rem', md: '1rem' } }}>
+        )}
+      </Paper>
+
+      {!currentSong && (
+        <Box
+          sx={{
+            p: { xs: 3, md: 4 },
+            textAlign: 'center',
+            bgcolor: 'rgba(0,0,0,0.2)',
+            borderRadius: 2,
+            position: 'relative'
+          }}
+        >
+          <Typography
+            variant="body1"
+            sx={{ color: 'rgba(255,255,255,0.7)', fontSize: { xs: '0.9rem', md: '1rem' } }}
+          >
             No song is currently playing.
           </Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', mt: 1, fontSize: { xs: '0.8rem', md: '0.875rem' } }}>
+          <Typography
+            variant="body2"
+            sx={{
+              color: 'rgba(255,255,255,0.5)',
+              mt: 1,
+              fontSize: { xs: '0.8rem', md: '0.875rem' }
+            }}
+          >
             Add songs to the queue to get started!
           </Typography>
+          <Box
+            sx={{
+              mt: 2,
+              display: 'flex',
+              justifyContent: 'center'
+            }}
+          >
+            <Chip
+              icon={isRadioMode ? <RadioButtonCheckedIcon /> : <RadioIcon />}
+              label={isRadioMode ? 'Radio Mode' : 'Radio Mode'}
+              onClick={toggleRadioMode}
+              size="small"
+              sx={{
+                bgcolor: isRadioMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255,255,255,0.1)',
+                color: isRadioMode ? '#4caf50' : 'rgba(255,255,255,0.7)',
+                border: isRadioMode ? '1px solid rgba(76, 175, 80, 0.5)' : '1px solid rgba(255,255,255,0.2)',
+                fontSize: { xs: '0.7rem', md: '0.75rem' },
+                height: { xs: '24px', md: '28px' },
+                fontWeight: isRadioMode ? 600 : 400,
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                '&:hover': {
+                  bgcolor: isRadioMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255,255,255,0.15)',
+                  transform: 'scale(1.05)'
+                },
+                '& .MuiChip-icon': {
+                  color: isRadioMode ? '#4caf50' : 'rgba(255,255,255,0.7)',
+                  fontSize: { xs: '0.9rem', md: '1rem' }
+                }
+              }}
+            />
+          </Box>
           {isRadioMode && (
-            <Box sx={{ 
-              mt: 2, 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: 1,
-              px: 2,
-              py: 1,
-              borderRadius: 2,
-              bgcolor: 'rgba(76, 175, 80, 0.15)',
-              border: '1px solid rgba(76, 175, 80, 0.3)'
-            }}>
+            <Box
+              sx={{
+                mt: 2,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 1,
+                px: 2,
+                py: 1,
+                borderRadius: 2,
+                bgcolor: 'rgba(76, 175, 80, 0.15)',
+                border: '1px solid rgba(76, 175, 80, 0.3)'
+              }}
+            >
               <RadioButtonCheckedIcon sx={{ color: '#4caf50', fontSize: '1rem' }} />
-              <Typography variant="body2" sx={{ color: '#4caf50', fontSize: { xs: '0.8rem', md: '0.875rem' }, fontWeight: 600 }}>
+              <Typography
+                variant="body2"
+                sx={{ color: '#4caf50', fontSize: { xs: '0.8rem', md: '0.875rem' }, fontWeight: 600 }}
+              >
                 Radio Mode Active - Ready for next song
               </Typography>
             </Box>

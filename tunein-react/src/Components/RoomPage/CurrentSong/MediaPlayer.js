@@ -110,7 +110,7 @@ const MediaPlayer = ({ videoId, startTime = 0, songData, isRadioMode, setIsRadio
         youtubePlayerRef.current = new window.YT.Player(playerRef.current, {
             height: '100%',
             width: '100%',
-            videoId: videoId, // Load the first video
+            videoId: videoId || '', // Allow idle player when no video is active
             playerVars: {
                 autoplay: 1,
                 controls: 1,
@@ -127,7 +127,9 @@ const MediaPlayer = ({ videoId, startTime = 0, songData, isRadioMode, setIsRadio
                     console.log('YouTube player ready');
                     setPlayerReady(true);
                     setPlayerInstance(event.target); // Save the player to state
-                    event.target.playVideo();
+                    if (videoId) {
+                        event.target.playVideo();
+                    }
                 },
                 onStateChange: (event) => {
                     if (event.data === window.YT.PlayerState.ENDED) {
@@ -150,6 +152,20 @@ const MediaPlayer = ({ videoId, startTime = 0, songData, isRadioMode, setIsRadio
             setPlayerReady(false);
         };
     }, [apiLoaded]); // This effect runs only once when API is loaded
+
+    useEffect(() => {
+        if (!playerInstance || videoId) return;
+
+        try {
+            console.log('⏸️ No active videoId; keeping player alive in idle state');
+            playerInstance.stopVideo();
+            if (typeof playerInstance.clearVideo === 'function') {
+                playerInstance.clearVideo();
+            }
+        } catch (error) {
+            console.error('Error idling YouTube player:', error);
+        }
+    }, [videoId, playerInstance]);
 
     return (
         <Box>
