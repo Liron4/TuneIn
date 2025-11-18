@@ -104,7 +104,7 @@ const MediaPlayer = ({ videoId, startTime = 0, songData, isRadioMode, setIsRadio
             youtubePlayerRef.current.destroy();
         }
 
-        isInitialLoadRef.current = true; // Set flag for initial load
+        isInitialLoadRef.current = !!videoId; // Set flag for initial load only if we have a video
 
         console.log('Creating new YouTube player instance');
         youtubePlayerRef.current = new window.YT.Player(playerRef.current, {
