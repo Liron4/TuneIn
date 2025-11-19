@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Typography, Paper, Chip } from '@mui/material';
-import RadioIcon from '@mui/icons-material/Radio';
-import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
+import { Box, Typography, Paper } from '@mui/material';
 import axios from 'axios';
 import MediaPlayer from './MediaPlayer';
 import SongWidget from './SongWidget';
@@ -19,10 +17,6 @@ const CurrentSong = () => {
   const [countdownData, setCountdownData] = useState(null);
   const initialStartTimeRef = useRef(0); // **BUG FIX #2**: Store initial start time
   const { newSocket, roomId, isConnected } = useSocket();
-  
-  // **RADIO MODE**: Lift state up so it persists when MediaPlayer unmounts
-  const [isRadioMode, setIsRadioMode] = useState(false);
-  const audioContextRef = useRef(null); // Persist AudioContext across song changes
 
   useEffect(() => {
     if (!newSocket || !roomId) {
@@ -132,21 +126,6 @@ const CurrentSong = () => {
     setError(null); // Clear any previous errors
   };
 
-  // Toggle Radio Mode
-  const toggleRadioMode = () => {
-    // Create AudioContext on first click (if not already created)
-    if (!audioContextRef.current) {
-      audioContextRef.current = new AudioContext();
-      console.log('🔊 AudioContext created and unlocked!');
-    }
-    
-    setIsRadioMode(prev => {
-      const newMode = !prev;
-      console.log(`📻 Radio Mode ${newMode ? 'ENABLED' : 'DISABLED'}`);
-      return newMode;
-    });
-  };
-
 
   if (loading) {
     return (
@@ -157,6 +136,7 @@ const CurrentSong = () => {
             color: 'white',
             mb: 2,
             fontWeight: 600
+
           }}
         >
           Now Playing
@@ -255,9 +235,6 @@ const CurrentSong = () => {
           videoId={currentSong?.id || null}
           startTime={currentSong ? initialStartTimeRef.current : 0}
           songData={currentSong}
-          isRadioMode={isRadioMode}
-          setIsRadioMode={setIsRadioMode}
-          audioContextRef={audioContextRef}
         />
 
         {currentSong && (
@@ -293,33 +270,6 @@ const CurrentSong = () => {
                   Added by: {currentSong.addedby}
                 </Typography>
               </Box>
-
-              {/* Radio Mode Toggle - Elegant Chip Style */}
-              <Chip
-                icon={isRadioMode ? <RadioButtonCheckedIcon /> : <RadioIcon />}
-                label={isRadioMode ? 'Radio Mode' : 'Radio Mode'}
-                onClick={toggleRadioMode}
-                size="small"
-                sx={{
-                  bgcolor: isRadioMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255,255,255,0.1)',
-                  color: isRadioMode ? '#4caf50' : 'rgba(255,255,255,0.7)',
-                  border: isRadioMode ? '1px solid rgba(76, 175, 80, 0.5)' : '1px solid rgba(255,255,255,0.2)',
-                  fontSize: { xs: '0.7rem', md: '0.75rem' },
-                  height: { xs: '24px', md: '28px' },
-                  fontWeight: isRadioMode ? 600 : 400,
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    bgcolor: isRadioMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255,255,255,0.15)',
-                    transform: 'scale(1.05)'
-                  },
-                  '& .MuiChip-icon': {
-                    color: isRadioMode ? '#4caf50' : 'rgba(255,255,255,0.7)',
-                    fontSize: { xs: '0.9rem', md: '1rem' }
-                  },
-                  flexShrink: 0
-                }}
-              />
             </Box>
           </Box>
         )}
@@ -351,61 +301,6 @@ const CurrentSong = () => {
           >
             Add songs to the queue to get started!
           </Typography>
-          <Box
-            sx={{
-              mt: 2,
-              display: 'flex',
-              justifyContent: 'center'
-            }}
-          >
-            <Chip
-              icon={isRadioMode ? <RadioButtonCheckedIcon /> : <RadioIcon />}
-              label={isRadioMode ? 'Radio Mode' : 'Radio Mode'}
-              onClick={toggleRadioMode}
-              size="small"
-              sx={{
-                bgcolor: isRadioMode ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255,255,255,0.1)',
-                color: isRadioMode ? '#4caf50' : 'rgba(255,255,255,0.7)',
-                border: isRadioMode ? '1px solid rgba(76, 175, 80, 0.5)' : '1px solid rgba(255,255,255,0.2)',
-                fontSize: { xs: '0.7rem', md: '0.75rem' },
-                height: { xs: '24px', md: '28px' },
-                fontWeight: isRadioMode ? 600 : 400,
-                transition: 'all 0.3s ease',
-                cursor: 'pointer',
-                '&:hover': {
-                  bgcolor: isRadioMode ? 'rgba(76, 175, 80, 0.3)' : 'rgba(255,255,255,0.15)',
-                  transform: 'scale(1.05)'
-                },
-                '& .MuiChip-icon': {
-                  color: isRadioMode ? '#4caf50' : 'rgba(255,255,255,0.7)',
-                  fontSize: { xs: '0.9rem', md: '1rem' }
-                }
-              }}
-            />
-          </Box>
-          {isRadioMode && (
-            <Box
-              sx={{
-                mt: 2,
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 1,
-                px: 2,
-                py: 1,
-                borderRadius: 2,
-                bgcolor: 'rgba(76, 175, 80, 0.15)',
-                border: '1px solid rgba(76, 175, 80, 0.3)'
-              }}
-            >
-              <RadioButtonCheckedIcon sx={{ color: '#4caf50', fontSize: '1rem' }} />
-              <Typography
-                variant="body2"
-                sx={{ color: '#4caf50', fontSize: { xs: '0.8rem', md: '0.875rem' }, fontWeight: 600 }}
-              >
-                Radio Mode Active - Ready for next song
-              </Typography>
-            </Box>
-          )}
         </Box>
       )}
     </Box>

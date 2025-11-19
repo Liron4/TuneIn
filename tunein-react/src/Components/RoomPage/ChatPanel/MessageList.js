@@ -23,7 +23,6 @@ const StyledMessageContainer = styled(Box)({
 });
 
 const MessageList = ({ messages, onUsernameClick, currentUserIsCreator, currentUsername, roomCreator }) => {
-  console.log('MessageList received messages:', messages); // Debug log
 
   return (
     <StyledMessageContainer>
@@ -44,7 +43,6 @@ const MessageList = ({ messages, onUsernameClick, currentUserIsCreator, currentU
         </Box>
       ) : (
         messages.map((message, index) => {
-          console.log(`Rendering message ${index}:`, message); // Debug log
           
           // Check if this message is from the room creator (regardless of who's viewing)
           const isCreatorMessage = roomCreator && message.userName === roomCreator.nickname;

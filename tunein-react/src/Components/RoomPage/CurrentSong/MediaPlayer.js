@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box } from '@mui/material';
-import RadioModeControl from './RadioModeControl';
 
-const MediaPlayer = ({ videoId, startTime = 0, songData, isRadioMode, setIsRadioMode, audioContextRef }) => {
+const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
     const playerRef = useRef(null);
     const youtubePlayerRef = useRef(null);
     const [playerInstance, setPlayerInstance] = useState(null);
@@ -189,13 +188,7 @@ const MediaPlayer = ({ videoId, startTime = 0, songData, isRadioMode, setIsRadio
                 />
             </Box>
             
-            {/* Render the RadioModeControl child and pass it the live, stable player instance */}
-            <RadioModeControl 
-                player={playerInstance} 
-                isRadioMode={isRadioMode}
-                setIsRadioMode={setIsRadioMode}
-                audioContextRef={audioContextRef}
-            />
+            
         </Box>
     );
 };

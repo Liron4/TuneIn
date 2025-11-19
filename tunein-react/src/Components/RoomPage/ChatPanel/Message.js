@@ -15,8 +15,6 @@ const Message = ({ message, onUsernameClick, showCreatorBadge }) => {
   const userName = message.userName || 'Anonymous';
   const userMessage = message.message || '';
 
-  console.log('Rendering message:', { userName, userMessage, message }); // Debug log
-
   // Handle username click
   const handleUsernameClick = () => {
     if (onUsernameClick && userName !== 'Anonymous') {

@@ -4,6 +4,7 @@ import { Box, Typography, CircularProgress } from '@mui/material';
 import axios from 'axios';
 import LeftBar from '../Components/RoomPage/QueueBar/LeftBar';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../Components/AuthPage/AuthContext';
 import CurrentSong from '../Components/RoomPage/CurrentSong/CurrentSong';
 import ChatPanel from '../Components/RoomPage/ChatPanel/ChatPanel';
 import { SocketProvider } from '../Components/RoomPage/Context/SocketContext';
@@ -17,6 +18,7 @@ const RoomPage = () => {
   const [roomSocket, setRoomSocket] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   useEffect(() => {
     const fetchRoomData = async () => {
@@ -33,6 +35,9 @@ const RoomPage = () => {
         if (err.response && err.response.status === 404) {
           alert("There's no such room.");
           navigate('/home');
+        } else if (err.response && err.response.status === 401) {
+          logout();
+          navigate('/auth');
         } else {
           setError("Failed to load the room. Please try again.");
         }
@@ -44,7 +49,7 @@ const RoomPage = () => {
     if (roomId) {
       fetchRoomData();
     }
-  }, [roomId, navigate]);
+  }, [roomId, navigate, logout]);
 
   // Create socket when RoomPage mounts
   useEffect(() => {

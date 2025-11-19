@@ -33,13 +33,6 @@ const ChatPanel = ({ roomId }) => {
   const { newSocket, isConnected, roomCreator } = useSocket();
   const MAX_MESSAGES = 200;
 
-  console.log('ChatPanel state:', {
-    roomId,
-    messagesCount: messages.length,
-    isConnected,
-    userProfile: !!userProfile
-  }); // Debug log
-
   // Fetch user profile on component mount
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -52,15 +45,12 @@ const ChatPanel = ({ roomId }) => {
           return;
         }
 
-        console.log('Fetching user profile...');
         const response = await axios.get(
           `${process.env.REACT_APP_API_URL}/api/user/profile`, // Fixed endpoint
           {
             headers: { Authorization: `Bearer ${token}` }
           }
         );
-
-        console.log('Raw API response:', response.data);
 
         // Map ProfileBar property names to ChatPanel expected names
         const profileData = {
@@ -71,7 +61,6 @@ const ChatPanel = ({ roomId }) => {
           points: response.data.points
         };
 
-        console.log('Mapped user profile:', profileData);
         setUserProfile(profileData);
       } catch (error) {
         console.error('Error fetching user profile:', error);
@@ -87,14 +76,10 @@ const ChatPanel = ({ roomId }) => {
 
   useEffect(() => {
     if (!newSocket) {
-      console.log('ChatPanel: Waiting for socket connection...');
       return;
     }
 
-    console.log('ChatPanel: Setting up chat listeners');
-
     const handleNewMessage = (message) => {
-      console.log('Received new message:', message);
       setMessages(prev => {
         const newMessages = [message, ...prev];
 
@@ -131,17 +116,11 @@ const ChatPanel = ({ roomId }) => {
   // Send message
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !isConnected || !userProfile) {
-      console.log('Cannot send message:', {
-        hasMessage: !!newMessage.trim(),
-        isConnected,
-        hasProfile: !!userProfile
-      });
       return;
     }
 
     // Client-side validation for 50 characters
     if (newMessage.length > 50) {
-      console.log('Message too long:', newMessage.length);
       return;
     }
 
@@ -150,13 +129,6 @@ const ChatPanel = ({ roomId }) => {
 
       // Get current video timestamp directly from MediaPlayer
       const videoTimestamp = getCurrentVideoTime();
-
-      console.log('Sending message:', {
-        message: newMessage.trim(),
-        videoTimestamp,
-        userPicture: userProfile.profilePicture,
-        nickname: userProfile.username
-      });
 
       // Send message with all user data
       await axios.post(
@@ -174,7 +146,6 @@ const ChatPanel = ({ roomId }) => {
 
       setNewMessage('');
       inputRef.current?.focus();
-      console.log('Message sent successfully');
     } catch (error) {
       console.error('Error sending message:', error);
       if (error.response?.status === 401) {
@@ -194,9 +165,8 @@ const ChatPanel = ({ roomId }) => {
     }
   };
 
-  // Handle username click to show profile popup
+    // Handle username click to show profile popup
   const handleUsernameClick = (username) => {
-    console.log('Username clicked:', username);
     setSelectedUsername(username);
   };
 
