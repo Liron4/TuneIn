@@ -1,20 +1,18 @@
 import { Box, Typography, IconButton } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
-import { useState } from 'react';
 import SearchSong from './SearchSong';
 import SongQueue from './SongQueue';
 
-const LeftBar = ({ roomName }) => {
-  const [visible, setVisible] = useState(false); // Start hidden on mobile
-
+const LeftBar = ({ roomName, isOpen, setIsOpen }) => {
+  
   return (
     <>
         <IconButton
-          onClick={() => setVisible(v => !v)}
+          onClick={() => setIsOpen(v => !v)}
           sx={{
             position: 'fixed',
-            left: visible ? { 
+            left: isOpen ? { 
           xs: '240px',  // Top right of mobile sidebar
           md: '260px'   // Top right of desktop sidebar
             } : '10px',     // Left edge when closed
@@ -31,7 +29,7 @@ const LeftBar = ({ roomName }) => {
           }}
           size="small"
         >
-          {visible ? <CloseIcon sx={{ left: '500px', paddingLeft: 3, paddingRight: 0 }} /> : <MenuIcon />}
+          {isOpen ? <CloseIcon sx={{ left: '500px', paddingLeft: 3, paddingRight: 0 }} /> : <MenuIcon />}
         </IconButton>
 
         {/* Sidebar - responsive behavior */}
@@ -60,7 +58,7 @@ const LeftBar = ({ roomName }) => {
         flexDirection: 'column',
         alignItems: 'flex-start',
         transition: 'transform 0.3s ease-in-out',
-        transform: visible ? 'translateX(0)' : 'translateX(-100%)',
+        transform: isOpen ? 'translateX(0)' : 'translateX(-100%)',
       }}>
         
           <Box sx={{ 
@@ -141,7 +139,7 @@ const LeftBar = ({ roomName }) => {
       </Box>
 
       {/* Backdrop for mobile - close sidebar when clicking outside */}
-      {visible && (
+      {isOpen && (
         <Box
           sx={{
             position: 'fixed',
@@ -153,7 +151,7 @@ const LeftBar = ({ roomName }) => {
             zIndex: 999,
             display: { xs: 'block', md: 'none' }, // Only show on mobile
           }}
-          onClick={() => setVisible(false)}
+          onClick={() => setIsOpen(false)}
         />
       )}
     </>

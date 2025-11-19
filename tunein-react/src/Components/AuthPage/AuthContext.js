@@ -8,10 +8,34 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
-    const userId = localStorage.getItem("userId");
-    setIsAuthenticated(!!token && !!userId);
-    setLoading(false);
+    const verifyToken = async () => {
+      const token = localStorage.getItem("authToken");
+      const userId = localStorage.getItem("userId");
+
+      if (!token || !userId) {
+        setIsAuthenticated(false);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Verify token with backend
+        await axios.get(`${process.env.REACT_APP_API_URL}/api/user/profile`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error("Token verification failed:", error);
+        // If token is invalid, clear storage and logout
+        localStorage.removeItem("authToken");
+        localStorage.removeItem("userId");
+        setIsAuthenticated(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    verifyToken();
   }, []);
 
   const login = (token, userId) => {

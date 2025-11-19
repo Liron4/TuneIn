@@ -15,6 +15,7 @@ const RoomPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [roomSocket, setRoomSocket] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -110,7 +111,7 @@ const RoomPage = () => {
         left: 0
       }}>
         {/* Left Sidebar */}
-        <LeftBar roomName={room?.name} />
+        <LeftBar roomName={room?.name} isOpen={isSidebarOpen} setIsOpen={setIsSidebarOpen} />
 
         {/* Main content area */}
         <Box sx={{
@@ -125,10 +126,11 @@ const RoomPage = () => {
           padding: {
             xs: '4px 4px 4px 50px',    // Mobile: Reduced padding for more space
             sm: '6px 6px 6px 50px',    // Small: Space only for toggle button
-            md: '12px',                // Medium: No reserved space
-            lg: '16px',                // Large: No reserved space
-            xl: '20px 40px 20px 20px'  // XL: Extra right padding for ChatPanel spacing
+            md: isSidebarOpen ? '12px 12px 12px 320px' : '12px 12px 12px 60px', // Medium: Adjust for sidebar
+            lg: isSidebarOpen ? '16px 16px 16px 320px' : '16px 16px 16px 60px', // Large: Adjust for sidebar
+            xl: isSidebarOpen ? '20px 20px 20px 320px' : '20px 20px 20px 60px'  // XL: Adjust for sidebar
           },
+          transition: 'padding-left 0.3s ease-in-out', // Smooth transition matching sidebar
           display: 'flex',
           flexDirection: 'column',
           alignItems: {
@@ -148,13 +150,10 @@ const RoomPage = () => {
               xs: '100%',     // Full width on mobile
               sm: '100%',     // Full width on small tablets
               md: '95%',      // Slightly narrower on medium tablets
-              lg: '90%',      // Constrained width on desktop
-              xl: '90%'       // Constrained width on XL (with right padding creating more space)
+              lg: '100%',     // Full width on desktop
+              xl: '100%'      // Full width on XL
             },
-            maxWidth: {
-              lg: '1400px',   // Maximum width on large screens
-              xl: '1600px'    // Maximum width on extra large screens
-            },
+            maxWidth: 'none',
             height: '100%',
             display: 'flex',
             flexDirection: {
@@ -267,13 +266,7 @@ const RoomPage = () => {
                 xl: 'calc(100vh - 40px)'   // Account for padding on large desktop
               },
               // **FIX**: Extra right margin on XL for better spacing
-              marginRight: {
-                xs: 0,       // No extra margin on mobile
-                sm: 0,       // No extra margin on small
-                md: 0,       // No extra margin on medium
-                lg: 0,       // No extra margin on large
-                xl: '20px'   // **EXTRA 20px right margin on XL screens**
-              },
+              marginRight: 0,
               display: 'flex',
               flexDirection: 'column',
               overflow: 'hidden',
