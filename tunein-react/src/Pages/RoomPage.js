@@ -131,9 +131,9 @@ const RoomPage = () => {
           padding: {
             xs: '4px 4px 4px 50px',    // Mobile: Reduced padding for more space
             sm: '6px 6px 6px 50px',    // Small: Space only for toggle button
-            md: isSidebarOpen ? '12px 12px 12px 320px' : '12px 12px 12px 60px', // Medium: Adjust for sidebar
-            lg: isSidebarOpen ? '16px 16px 16px 320px' : '16px 16px 16px 60px', // Large: Adjust for sidebar
-            xl: isSidebarOpen ? '20px 20px 20px 320px' : '20px 20px 20px 60px'  // XL: Adjust for sidebar
+            md: isSidebarOpen ? '12px 12px 12px 340px' : '12px 12px 12px 60px', // Medium: Adjust for sidebar
+            lg: isSidebarOpen ? '16px 16px 16px 340px' : '16px 16px 16px 60px', // Large: Adjust for sidebar
+            xl: isSidebarOpen ? '20px 20px 20px 340px' : '20px 20px 20px 60px'  // XL: Adjust for sidebar
           },
           transition: 'padding-left 0.3s ease-in-out', // Smooth transition matching sidebar
           display: 'flex',
@@ -187,7 +187,7 @@ const RoomPage = () => {
                 sm: '1 1 auto',        // Small: Take available space
                 md: '1 1 auto',        // Medium: Take available space  
                 lg: '1 1 60%',         // Large: 60% width
-                xl: '1 1 65%'          // XL: 65% width
+                xl: '1 1 58%'          // XL: Reduced width to prevent vertical overflow
               },
               minHeight: {
                 xs: 0,                 // Allow flex shrinking on mobile
@@ -247,7 +247,7 @@ const RoomPage = () => {
                 sm: '1 1 auto',        // Small: Take remaining space
                 md: '1 1 auto',        // Medium: Take remaining space
                 lg: '0 0 40%',         // Large: 40% width
-                xl: '0 0 35%'          // XL: 35% width
+                xl: '0 0 42%'          // XL: Increased width to fill space
               },
               minHeight: {
                 xs: '250px',           // Ensure minimum usable height on mobile
