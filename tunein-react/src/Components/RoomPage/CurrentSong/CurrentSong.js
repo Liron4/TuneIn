@@ -223,26 +223,18 @@ const CurrentSong = () => {
 
       <Paper
         sx={{
-          p: currentSong ? { xs: 1.5, md: 2 } : 0,
+          p: { xs: 1.5, md: 2 },
           borderRadius: 2,
           bgcolor: 'rgba(0,0,0,0.4)',
           maxWidth: '100%',
           overflow: 'hidden',
-          // Keep mounted but hide visually when no song
-          visibility: currentSong ? 'visible' : 'hidden',
-          height: currentSong ? 'auto' : 0,
-          opacity: currentSong ? 1 : 0,
-          mt: currentSong ? 0 : 0
+          display: currentSong ? 'block' : 'none'
         }}
       >
         <MediaPlayer
           videoId={currentSong?.id || null}
           startTime={currentSong ? initialStartTimeRef.current : 0}
           songData={currentSong}
-          visible={!!currentSong}
-          keepLastSongWhenEmpty={true}
-          resumeRetryCount={3}
-          resumeRetryIntervalMs={750}
         />
 
         {currentSong && (
