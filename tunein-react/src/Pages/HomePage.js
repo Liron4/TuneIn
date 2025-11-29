@@ -2,8 +2,9 @@ import { Box, useTheme } from '@mui/material';
 import ProfileBar from '../Components/HomePage/ProfileBar';
 import RoomBrowser from '../Components/HomePage/RoomBrowser';
 import DarkModeToggle from '../Components/.reusable/DarkModeToggle';
+import { ThemeProvider } from '../Components/.reusable/ThemeContext';
 
-const HomePage = () => {
+const HomePageContent = () => {
   const theme = useTheme();
 
   return (
@@ -27,6 +28,14 @@ const HomePage = () => {
         <RoomBrowser />
       </Box>
     </Box>
+  );
+};
+
+const HomePage = () => {
+  return (
+    <ThemeProvider>
+      <HomePageContent />
+    </ThemeProvider>
   );
 };
 

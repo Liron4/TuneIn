@@ -3,11 +3,12 @@ import Login from "../Components/AuthPage/Login";
 import Register from "../Components/AuthPage/Register";
 import PopUpMessage from "../Components/AuthPage/PopUpMessage";
 import DarkModeToggle from "../Components/.reusable/DarkModeToggle";
+import { ThemeProvider } from "../Components/.reusable/ThemeContext";
 import { Box, Button, ButtonGroup, Paper, Container, Divider, Typography, useTheme } from "@mui/material";
 import GoogleIcon from '@mui/icons-material/Google';
 import tuneInLogo from "../logo.png";
 
-export default function AuthPage({onAuthSuccess}) {
+function AuthPageContent({onAuthSuccess}) {
   const [isLogin, setIsLogin] = useState(true);
   const theme = useTheme();
 
@@ -68,5 +69,13 @@ export default function AuthPage({onAuthSuccess}) {
         </Paper>
       </Container>
     </Box>
+  );
+}
+
+export default function AuthPage(props) {
+  return (
+    <ThemeProvider>
+      <AuthPageContent {...props} />
+    </ThemeProvider>
   );
 }

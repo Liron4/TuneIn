@@ -4,7 +4,6 @@ import HomePage from "./Pages/HomePage";
 import RoomPage from "./Pages/RoomPage";
 import AuthCallbackPage from "./Pages/AuthCallbackPage";
 import { AuthProvider, useAuth } from "./Components/AuthPage/AuthContext";
-import { ThemeProvider } from "./Components/RoomPage/Context/ThemeContext";
 
 function App() {
 
@@ -19,19 +18,17 @@ function App() {
   };
 
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/auth" element={<AuthPage />} />
-            <Route path="/auth/callback" element={<AuthCallbackPage />} />
-            <Route path="/home" element={<ProtectedRoute element={<HomePage />} />} />
-            <Route path="/room/:roomId" element={<ProtectedRoute element={<RoomPage />} />} />
-            <Route path="*" element={<Navigate to="/home" replace />} />
-          </Routes>
-        </Router>
-      </AuthProvider>
-    </ThemeProvider>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/auth" element={<AuthPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route path="/home" element={<ProtectedRoute element={<HomePage />} />} />
+          <Route path="/room/:roomId" element={<ProtectedRoute element={<RoomPage />} />} />
+          <Route path="*" element={<Navigate to="/home" replace />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 
