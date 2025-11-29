@@ -4,7 +4,7 @@ import { useAuth } from '../AuthPage/AuthContext.js';
 import axios from 'axios';
 import {
   Box, Button, Typography, Avatar,
-  IconButton, CircularProgress
+  IconButton, CircularProgress, useTheme
 } from '@mui/material';
 // Removed Chip, TextField, AddIcon, DeleteIcon as they are now in GenrePicker
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -104,6 +104,9 @@ const ProfileBar = () => {
     navigate('/auth'); // Redirect to auth page after logout
   };
 
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
 return (
   <Box sx={{
     position: 'fixed',
@@ -111,7 +114,7 @@ return (
     top: 0,
     bottom: 0,
     width: isOpen ? '300px' : '48px', // Slightly wider for button
-    backgroundColor: isOpen ? 'rgba(0, 0, 0, 0.97)' : 'transparent', // Blue when open, transparent when closed
+    backgroundColor: isOpen ? (isDark ? 'rgba(30, 30, 30, 0.98)' : 'rgba(0, 0, 0, 0.97)') : 'transparent',
     color: 'white',
     padding: isOpen ? '20px' : '20px 0',
     transition: 'width 0.3s ease, background-color 0.3s ease, padding 0.3s ease',
@@ -132,7 +135,7 @@ return (
         backgroundColor: '#1976d2', // Material blue 700
         color: 'white',
         position: 'absolute',
-        left: isOpen ? '270px' : '2px', // Adjust for new width
+        left: isOpen ? '250px' : '2px', // Adjust for new width
         top: '20px',
         zIndex: 1001,
         boxShadow: 3,

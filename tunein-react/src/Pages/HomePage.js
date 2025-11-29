@@ -1,14 +1,18 @@
-import { Box } from '@mui/material';
+import { Box, useTheme } from '@mui/material';
 import ProfileBar from '../Components/HomePage/ProfileBar';
 import RoomBrowser from '../Components/HomePage/RoomBrowser';
+import DarkModeToggle from '../Components/.reusable/DarkModeToggle';
 
 const HomePage = () => {
+  const theme = useTheme();
+
   return (
     <Box sx={{ 
       display: 'flex', 
       height: '100vh',
-      backgroundColor: '#f5f5f5'
+      backgroundColor: theme.palette.background.default
     }}>
+      <DarkModeToggle />
       {/* Left sidebar - ProfileBar */}
       <ProfileBar />
       

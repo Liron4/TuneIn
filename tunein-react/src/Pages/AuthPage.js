@@ -2,12 +2,14 @@ import { useState } from "react";
 import Login from "../Components/AuthPage/Login";
 import Register from "../Components/AuthPage/Register";
 import PopUpMessage from "../Components/AuthPage/PopUpMessage";
-import { Box, Button, ButtonGroup, Paper, Container, Divider, Typography } from "@mui/material";
+import DarkModeToggle from "../Components/.reusable/DarkModeToggle";
+import { Box, Button, ButtonGroup, Paper, Container, Divider, Typography, useTheme } from "@mui/material";
 import GoogleIcon from '@mui/icons-material/Google';
 import tuneInLogo from "../logo.png";
 
 export default function AuthPage({onAuthSuccess}) {
   const [isLogin, setIsLogin] = useState(true);
+  const theme = useTheme();
 
   const handleGoogleLogin = () => {
     window.location.href = `${process.env.REACT_APP_API_URL}/api/auth/google`;
@@ -15,12 +17,13 @@ export default function AuthPage({onAuthSuccess}) {
 
   return (
     <Box
-      minHeight="90vh"
+      minHeight="100vh"
       display="flex"
       alignItems="center"
       justifyContent="center"
-      bgcolor="#ffffffff"
+      bgcolor={theme.palette.background.default}
     >
+      <DarkModeToggle />
       <PopUpMessage />
       <Container maxWidth="xs">
         <Box mb={-8} display="flex" justifyContent="center">

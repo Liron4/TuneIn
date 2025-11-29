@@ -9,6 +9,7 @@ import {
   FormControlLabel,
   CircularProgress,
   Skeleton,
+  useTheme,
 } from '@mui/material';
 import { useAuth } from '../../Components/AuthPage/AuthContext';
 import imageCompression from 'browser-image-compression';
@@ -175,14 +176,16 @@ const CreateRoomModal = ({ open, onClose, onSubmit }) => {
     if (imagePreview !== defaultRoomImagePath) setImagePreview(defaultRoomImagePath);
   };
 
+  const theme = useTheme();
+
   return (
     <Modal open={open} onClose={isSubmitting ? undefined : handleCancel} aria-labelledby="create-room-modal">
       <Box sx={{
         position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-        width: { xs: '90%', sm: 500 }, bgcolor: 'background.paper', borderRadius: 2,
+        width: { xs: '90%', sm: 500 }, bgcolor: theme.palette.background.paper, borderRadius: 2,
         boxShadow: 24, p: 4, maxHeight: '90vh', overflowY: 'auto',
       }}>
-        <Typography variant="h5" component="h2" sx={{ mb: 3 }}>Create New Room</Typography>
+        <Typography variant="h5" component="h2" sx={{ mb: 3, color: theme.palette.text.primary }}>Create New Room</Typography>
         
         {/* Display form-level errors */}
         {errors.form && (
@@ -217,7 +220,8 @@ const CreateRoomModal = ({ open, onClose, onSubmit }) => {
             <Box sx={{
               display: 'flex', justifyContent: 'center', width: '100%', height: 0,
               paddingBottom: '56.25%', position: 'relative', borderRadius: 1, overflow: 'hidden',
-              border: errors.imageFile ? '1px solid red' : '1px solid #ccc', backgroundColor: '#f0f0f0'
+              border: errors.imageFile ? '1px solid red' : `1px solid ${theme.palette.divider}`, 
+              backgroundColor: theme.palette.mode === 'dark' ? '#2a2a2a' : '#f0f0f0'
             }}>
               {isImageLoading && <Skeleton variant="rectangular" width="100%" height="100%" animation="wave" sx={{ position: 'absolute', top: 0, left: 0 }} />}
               {imagePreview && <Box component="img" src={imagePreview} alt="Room Preview" onLoad={handleImageLoad} onError={handleImageError}

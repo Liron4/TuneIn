@@ -9,7 +9,8 @@ import {
   Radio,
   RadioGroup,
   Paper,
-  Divider
+  Divider,
+  useTheme
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import FilterListIcon from '@mui/icons-material/FilterList';
@@ -177,16 +178,17 @@ const RoomBrowser = () => {
 
   const stats = getFilterStats();
   const commonGenres = getCommonGenres();
+  const theme = useTheme();
 
 
 
   return (
     <Box sx={{ width: '100%' }}>
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'center', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1" sx={{ flex: 1, textAlign: 'center' }}>
+        <Typography variant="h4" component="h1" sx={{ flex: 1, textAlign: 'center', color: theme.palette.text.primary }}>
           Music Rooms
         </Typography>
-        <Box sx={{ ml: { sm: 'auto' }, mt: { xs: 1, sm: 0 } }}>
+        <Box sx={{ ml: { sm: 'auto' }, mt: { xs: 1, sm: 0 }, mr: { xs: 0, sm: 6 } }}>
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -198,10 +200,10 @@ const RoomBrowser = () => {
       </Box>
 
       {/* Filter Controls */}
-      <Paper sx={{ p: 2, mb: 3, backgroundColor: '#f5f5f5' }}>
+      <Paper sx={{ p: 2, mb: 3, backgroundColor: theme.palette.background.paper }}>
         <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <FilterListIcon sx={{ mr: 1 }} />
-          <Typography variant="h6">Filter Rooms</Typography>
+          <FilterListIcon sx={{ mr: 1, color: theme.palette.text.primary }} />
+          <Typography variant="h6" sx={{ color: theme.palette.text.primary }}>Filter Rooms</Typography>
         </Box>
         <RadioGroup
           row

@@ -6,7 +6,8 @@ import {
   Typography, 
   CardActionArea, 
   Box,
-  Chip
+  Chip,
+  useTheme
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import PeopleIcon from '@mui/icons-material/People';
@@ -14,6 +15,7 @@ import PeopleIcon from '@mui/icons-material/People';
 const RoomCard = ({ room }) => {
   const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
+  const theme = useTheme();
 
   const handleCardClick = () => {
     navigate(`/room/${room._id}`);
@@ -28,7 +30,8 @@ const RoomCard = ({ room }) => {
       height: '100%',
       display: 'flex', 
       flexDirection: 'column',
-      position: 'relative'
+      position: 'relative',
+      backgroundColor: theme.palette.background.paper
     }}> 
       <CardActionArea 
         onClick={handleCardClick} 
