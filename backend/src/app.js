@@ -25,6 +25,7 @@ const app = express();
 // Dynamic CORS configuration for production
 const allowedOrigins = [
   'http://localhost:3000',
+  'http://tuneinapp.me',
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
@@ -84,7 +85,7 @@ const server = http.createServer(app);
 // Setup Socket.IO with CORS
 const io = socketIo(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: ['http://tuneinapp.me', process.env.FRONTEND_URL || 'http://localhost:3000'],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
   }

@@ -12,7 +12,7 @@ const googleCallback = (req, res) => {
     const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
 
     // 2. הפניה חזרה ל-Frontend עם הטוקן ו-userId כ-Query Parameters
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = 'http://tuneinapp.me';
     
     // ניצור URL לטיפול ב-Callback בצד ה-Frontend
     const redirectUrl = new URL(`${frontendUrl}/auth/callback`);
@@ -23,7 +23,7 @@ const googleCallback = (req, res) => {
 
   } catch (err) {
     console.error('Error in Google Auth Controller:', err);
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontendUrl = 'http://tuneinapp.me';
     res.redirect(`${frontendUrl}/auth?error=true`);
   }
 };
