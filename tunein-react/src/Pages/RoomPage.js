@@ -154,7 +154,7 @@ const RoomPage = () => {
             width: {
               xs: '100%',     // Full width on mobile
               sm: '100%',     // Full width on small tablets
-              md: '95%',      // Slightly narrower on medium tablets
+              md: '100%',     // Full width on medium tablets
               lg: '100%',     // Full width on desktop
               xl: '100%'      // Full width on XL
             },
@@ -164,14 +164,14 @@ const RoomPage = () => {
             flexDirection: {
               xs: 'column',    // Mobile: Stack vertically
               sm: 'column',    // Small tablets: Stack vertically  
-              md: 'column',    // Medium tablets: Stack vertically
+              md: 'row',       // Medium tablets: Side by side
               lg: 'row',       // Laptops: Side by side
               xl: 'row'        // Desktops: Side by side
             },
             gap: { // Gap between components
               xs: 0.25,  // Minimal gap on mobile to maximize space
               sm: 0.5,   // Small gap on small devices
-              md: 1,    
+              md: 2,     // Medium gap on tablets
               lg: 4,     
               xl: 5      
             },
@@ -185,7 +185,7 @@ const RoomPage = () => {
               flex: {
                 xs: '1 1 auto',        // Mobile: Take available space
                 sm: '1 1 auto',        // Small: Take available space
-                md: '1 1 auto',        // Medium: Take available space  
+                md: '1 1 60%',         // Medium: 60% width (side by side)
                 lg: '1 1 60%',         // Large: 60% width
                 xl: '1 1 58%'          // XL: Reduced width to prevent vertical overflow
               },
@@ -199,14 +199,14 @@ const RoomPage = () => {
               height: {
                 xs: '58%',             // Mobile: Reduced to give ChatPanel more reliable space
                 sm: '62%',             // Small: Adjusted
-                md: '68%',             // Medium: Adjusted
+                md: '100%',            // Medium: Full height (side by side)
                 lg: '100%',            // Large: Full height (side by side)
                 xl: '100%'             // XL: Full height (side by side)
               },
               maxHeight: {
                 xs: '58%',             // Enforce max height on mobile
                 sm: '62%',             // Enforce max height on small
-                md: '68%',             // Enforce max height on medium
+                md: 'calc(100vh - 24px)',  // Account for padding on tablets
                 lg: 'calc(100vh - 32px)',  // Account for padding on desktop
                 xl: 'calc(100vh - 40px)'   // Account for padding on large desktop
               },
@@ -245,28 +245,28 @@ const RoomPage = () => {
               flex: {
                 xs: '1 1 auto',        // Mobile: Take remaining space
                 sm: '1 1 auto',        // Small: Take remaining space
-                md: '1 1 auto',        // Medium: Take remaining space
+                md: '0 0 40%',         // Medium: 40% width (side by side)
                 lg: '0 0 40%',         // Large: 40% width
                 xl: '0 0 42%'          // XL: Increased width to fill space
               },
               minHeight: {
                 xs: '250px',           // Ensure minimum usable height on mobile
                 sm: '280px',           // Ensure minimum usable height on small
-                md: '300px',           // Ensure minimum usable height on medium
+                md: 0,                 // No min height needed (side by side)
                 lg: 0,
                 xl: 0
               },
               height: {
                 xs: '42%',             // Mobile: Increased to prevent cutoff
                 sm: '38%',             // Small: Adjusted
-                md: '32%',             // Medium: Adjusted
+                md: '100%',            // Medium: Full height (side by side)
                 lg: '100%',            // Large: Full height (side by side)
                 xl: '100%'             // XL: Full height (side by side)
               },
               maxHeight: {
                 xs: '42%',             // Enforce max height on mobile
                 sm: '38%',             // Enforce max height on small
-                md: '32%',             // Enforce max height on medium
+                md: 'calc(100vh - 24px)',  // Account for padding on tablets
                 lg: 'calc(100vh - 32px)',  // Account for padding on desktop
                 xl: 'calc(100vh - 40px)'   // Account for padding on large desktop
               },
