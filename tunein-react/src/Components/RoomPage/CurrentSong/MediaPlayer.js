@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box } from '@mui/material';
 
-const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
+const MediaPlayer = ({ videoId, startTime = 0, songData, mute = false, onEnded }) => {
     const playerRef = useRef(null);
     const youtubePlayerRef = useRef(null);
     const [playerInstance, setPlayerInstance] = useState(null);
@@ -126,6 +126,11 @@ const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
                     console.log('YouTube player ready');
                     setPlayerReady(true);
                     setPlayerInstance(event.target); // Save the player to state
+                    if (mute) {
+                        event.target.mute();
+                    } else {
+                        event.target.unMute();
+                    }
                     if (videoId) {
                         event.target.playVideo();
                     }
@@ -133,6 +138,9 @@ const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
                 onStateChange: (event) => {
                     if (event.data === window.YT.PlayerState.ENDED) {
                         console.log('Video ended (via player event)');
+                        if (typeof onEnded === 'function') {
+                            onEnded();
+                        }
                     }
                 },
                 onError: (event) => {
@@ -151,6 +159,20 @@ const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
             setPlayerReady(false);
         };
     }, [apiLoaded]); // This effect runs only once when API is loaded
+
+    // React to mute toggle even after player is ready
+    useEffect(() => {
+        if (!playerInstance || !playerReady) return;
+        try {
+            if (mute) {
+                playerInstance.mute();
+            } else {
+                playerInstance.unMute();
+            }
+        } catch (error) {
+            console.error('Error toggling mute:', error);
+        }
+    }, [mute, playerInstance, playerReady]);
 
     useEffect(() => {
         if (!playerInstance || videoId) return;

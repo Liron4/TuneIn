@@ -10,12 +10,17 @@ import CountDownMessage from './CountDownMessage';
 
 
 const CurrentSong = () => {
+  const INTRO_VIDEO_ID = 'UVsHJP1D_Io';
+
   const [currentSong, setCurrentSong] = useState(null);
   const [serverTimeDiff, setServerTimeDiff] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [countdownData, setCountdownData] = useState(null);
+  const [playIntro, setPlayIntro] = useState(false);
+
   const initialStartTimeRef = useRef(0); // **BUG FIX #2**: Store initial start time
+  const introPlayedRef = useRef(false);
   const { newSocket, roomId, isConnected } = useSocket();
 
   useEffect(() => {
@@ -45,6 +50,7 @@ const CurrentSong = () => {
         setCurrentSong(data.currentSong);
         // **BUG FIX #1**: Clear countdown with explicit null timestamp to force update
         setCountdownData({ countdown: 0, nextSong: null, clear: Date.now() });
+        setPlayIntro(false);
       } else {
         setCurrentSong(null);
       }
@@ -101,6 +107,10 @@ const CurrentSong = () => {
 
           setCurrentSong(response.data.currentSong);
         }
+        // If there is no active song on initial fetch, trigger intro once
+        if (!response.data.currentSong && !introPlayedRef.current) {
+          setPlayIntro(true);
+        }
         setLoading(false);
       } catch (err) {
         console.error('Error fetching current song:', err);
@@ -111,6 +121,26 @@ const CurrentSong = () => {
 
     fetchCurrentSong();
   }, [roomId]);
+
+  // Reset intro state when switching rooms
+  useEffect(() => {
+    introPlayedRef.current = false;
+    setPlayIntro(false);
+  }, [roomId]);
+
+  // Guard: once intro started, stop it if a real song arrives
+  useEffect(() => {
+    if (currentSong) {
+      setPlayIntro(false);
+    }
+  }, [currentSong]);
+
+  // Late trigger if loading finished with no song
+  useEffect(() => {
+    if (!loading && !currentSong && !introPlayedRef.current) {
+      setPlayIntro(true);
+    }
+  }, [loading, currentSong]);
 
   // Calculate elapsed time since song started
   const getElapsedSeconds = () => {
@@ -124,6 +154,11 @@ const CurrentSong = () => {
   const handleSkipSuccess = () => {
     console.log('Song skipped successfully from SkipSong component');
     setError(null); // Clear any previous errors
+  };
+
+  const handleIntroEnd = () => {
+    introPlayedRef.current = true;
+    setPlayIntro(false);
   };
 
 
@@ -159,6 +194,8 @@ const CurrentSong = () => {
       </Box>
     );
   }
+
+  const shouldShowPlayer = !!currentSong || playIntro;
 
   return (
     <Box sx={{
@@ -228,13 +265,15 @@ const CurrentSong = () => {
           bgcolor: 'rgba(0,0,0,0.4)',
           maxWidth: '100%',
           overflow: 'hidden',
-          display: currentSong ? 'block' : 'none'
+          display: shouldShowPlayer ? 'block' : 'none'
         }}
       >
         <MediaPlayer
-          videoId={currentSong?.id || null}
+          videoId={currentSong ? currentSong.id : playIntro ? INTRO_VIDEO_ID : null}
           startTime={currentSong ? initialStartTimeRef.current : 0}
           songData={currentSong}
+          mute={playIntro}
+          onEnded={playIntro ? handleIntroEnd : undefined}
         />
 
         {currentSong && (
@@ -275,7 +314,7 @@ const CurrentSong = () => {
         )}
       </Paper>
 
-      {!currentSong && (
+      {!currentSong && !playIntro && (
         <Box
           sx={{
             p: { xs: 3, md: 4 },
