@@ -7,10 +7,11 @@ import { useSocket } from '../Context/SocketContext';
 import SkipSong from './SkipSong/SkipSong';
 import CountDownMessage from './CountDownMessage';
 
-
+const INTRO_VIDEO_ID = 'UVsHJP1D_Io';
 
 const CurrentSong = () => {
   const [currentSong, setCurrentSong] = useState(null);
+  const [isIntroPlaying, setIsIntroPlaying] = useState(false);
   const [serverTimeDiff, setServerTimeDiff] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,6 +44,7 @@ const CurrentSong = () => {
         initialStartTimeRef.current = elapsed;
 
         setCurrentSong(data.currentSong);
+        setIsIntroPlaying(false); // Stop intro if a real song starts
         // **BUG FIX #1**: Clear countdown with explicit null timestamp to force update
         setCountdownData({ countdown: 0, nextSong: null, clear: Date.now() });
       } else {
@@ -100,6 +102,10 @@ const CurrentSong = () => {
           initialStartTimeRef.current = elapsed;
 
           setCurrentSong(response.data.currentSong);
+          setIsIntroPlaying(false);
+        } else {
+          // No song playing initially -> Play Intro
+          setIsIntroPlaying(true);
         }
         setLoading(false);
       } catch (err) {
@@ -228,13 +234,15 @@ const CurrentSong = () => {
           bgcolor: 'rgba(0,0,0,0.4)',
           maxWidth: '100%',
           overflow: 'hidden',
-          display: currentSong ? 'block' : 'none'
+          display: (currentSong || isIntroPlaying) ? 'block' : 'none'
         }}
       >
         <MediaPlayer
-          videoId={currentSong?.id || null}
+          videoId={currentSong?.id || (isIntroPlaying ? INTRO_VIDEO_ID : null)}
           startTime={currentSong ? initialStartTimeRef.current : 0}
           songData={currentSong}
+          muted={isIntroPlaying}
+          onEnded={() => setIsIntroPlaying(false)}
         />
 
         {currentSong && (
@@ -275,7 +283,7 @@ const CurrentSong = () => {
         )}
       </Paper>
 
-      {!currentSong && (
+      {!currentSong && !isIntroPlaying && (
         <Box
           sx={{
             p: { xs: 3, md: 4 },

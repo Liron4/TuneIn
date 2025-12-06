@@ -1,13 +1,24 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box } from '@mui/material';
 
-const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
+const MediaPlayer = ({ videoId, startTime = 0, songData, muted = false, onEnded }) => {
     const playerRef = useRef(null);
     const youtubePlayerRef = useRef(null);
     const [playerInstance, setPlayerInstance] = useState(null);
     const [playerReady, setPlayerReady] = useState(false);
     const [apiLoaded, setApiLoaded] = useState(!!window.YT);
     const isInitialLoadRef = useRef(true);
+
+    // ADDED: Handle muted prop changes
+    useEffect(() => {
+        if (playerInstance && typeof playerInstance.mute === 'function' && typeof playerInstance.unMute === 'function') {
+            if (muted) {
+                playerInstance.mute();
+            } else {
+                playerInstance.unMute();
+            }
+        }
+    }, [muted, playerInstance]);
 
     // Handle NEW songs (videoId prop changes)
     useEffect(() => {
@@ -119,7 +130,7 @@ const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
                 start: startTime || 0, // Use startTime ONLY for initial load
                 modestbranding: 1,
                 playsinline: 1,
-                mute: 0
+                mute: muted ? 1 : 0
             },
             events: {
                 onReady: (event) => {
@@ -133,6 +144,7 @@ const MediaPlayer = ({ videoId, startTime = 0, songData }) => {
                 onStateChange: (event) => {
                     if (event.data === window.YT.PlayerState.ENDED) {
                         console.log('Video ended (via player event)');
+                        if (onEnded) onEnded();
                     }
                 },
                 onError: (event) => {
