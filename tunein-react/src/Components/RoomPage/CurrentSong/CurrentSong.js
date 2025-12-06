@@ -168,9 +168,13 @@ const CurrentSong = () => {
 
   return (
     <Box sx={{
-      mb: { xs: 2, md: 4 },
+      mb: { xs: 2, md: 2, lg: 1 },
       width: '100%',
-      minHeight: 'fit-content'
+      minHeight: 'fit-content',
+      maxHeight: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden'
     }}>
 
       {/* Header section with SkipSong integration */}
@@ -178,9 +182,10 @@ const CurrentSong = () => {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'flex-start', // Change from 'center' to 'flex-start'
-        mb: { xs: 1.5, md: 2 },
+        mb: { xs: 1.5, md: 1.5, lg: 1 },
         minHeight: { xs: '32px', md: '36px' }, // Ensure consistent height
-        gap: 1
+        gap: 1,
+        flexShrink: 0
       }}>
         <Typography
           variant="h6"
@@ -229,24 +234,50 @@ const CurrentSong = () => {
 
       <Paper
         sx={{
-          p: { xs: 1.5, md: 2 },
+          p: { xs: 1.5, md: 1.5, lg: 1, xl: 1 },
           borderRadius: 2,
           bgcolor: 'rgba(0,0,0,0.4)',
           maxWidth: '100%',
           overflow: 'hidden',
-          display: (currentSong || isIntroPlaying) ? 'block' : 'none'
+          display: (currentSong || isIntroPlaying) ? 'flex' : 'none',
+          flexDirection: 'column',
+          flex: '1 1 auto',
+          minHeight: 0
         }}
       >
-        <MediaPlayer
-          videoId={currentSong?.id || (isIntroPlaying ? INTRO_VIDEO_ID : null)}
-          startTime={currentSong ? initialStartTimeRef.current : 0}
-          songData={currentSong}
-          muted={isIntroPlaying}
-          onEnded={() => setIsIntroPlaying(false)}
-        />
+        <Box sx={{ 
+          flex: '1 1 auto', 
+          minHeight: 0, 
+          display: 'flex', 
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          width: '100%',
+          overflow: 'hidden',
+          // Add padding bottom on XL to prevent cut-off
+          pb: { xl: 2 }
+        }}>
+          <Box sx={{ 
+            width: '100%',
+            maxWidth: '100%',
+            maxHeight: '100%',
+            aspectRatio: '16/9',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center'
+          }}>
+            <MediaPlayer
+              videoId={currentSong?.id || (isIntroPlaying ? INTRO_VIDEO_ID : null)}
+              startTime={currentSong ? initialStartTimeRef.current : 0}
+              songData={currentSong}
+              muted={isIntroPlaying}
+              onEnded={() => setIsIntroPlaying(false)}
+            />
+          </Box>
+        </Box>
 
         {currentSong && (
-          <Box sx={{ mt: { xs: 1.5, md: 2 } }}>
+          <Box sx={{ mt: { xs: 1.5, md: 1.5, lg: 1, xl: 0.5 }, flexShrink: 0 }}>
             <Box
               sx={{
                 display: 'flex',

@@ -185,9 +185,9 @@ const RoomPage = () => {
               flex: {
                 xs: '1 1 auto',        // Mobile: Take available space
                 sm: '1 1 auto',        // Small: Take available space
-                md: '1 1 60%',         // Medium: 60% width (side by side)
-                lg: '1 1 60%',         // Large: 60% width
-                xl: '1 1 58%'          // XL: Reduced width to prevent vertical overflow
+                md: '1 1 70%',         // Medium: 70% width (side by side)
+                lg: '1 1 75%',         // Large: 75% width
+                xl: '1 1 75%'          // XL: 75% width for better balance
               },
               minHeight: {
                 xs: 0,                 // Allow flex shrinking on mobile
@@ -218,7 +218,7 @@ const RoomPage = () => {
                 sm: 'auto',    // Allow scrolling on small devices
                 md: 'auto',    // Allow scrolling on medium devices
                 lg: 'auto',    // Allow scrolling on large devices
-                xl: 'hidden'   // **DISABLE scroll on XL screens**
+                xl: 'auto'     // Allow scrolling on XL screens if needed
               },
               boxSizing: 'border-box',
               // Custom scrollbar styling (for non-XL screens)
@@ -245,9 +245,9 @@ const RoomPage = () => {
               flex: {
                 xs: '1 1 auto',        // Mobile: Take remaining space
                 sm: '1 1 auto',        // Small: Take remaining space
-                md: '0 0 40%',         // Medium: 40% width (side by side)
-                lg: '0 0 40%',         // Large: 40% width
-                xl: '0 0 42%'          // XL: Increased width to fill space
+                md: '0 0 30%',         // Medium: 30% width (side by side)
+                lg: '0 0 25%',         // Large: 25% width
+                xl: '0 0 25%'          // XL: 25% width for balance
               },
               minHeight: {
                 xs: '250px',           // Ensure minimum usable height on mobile

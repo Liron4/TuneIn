@@ -192,8 +192,8 @@ const SongWidget = ({ currentSong, getElapsedSeconds }) => {
     return (
         <Paper
             sx={{
-                p: 2,
-                mb: 2,
+                p: { xs: 2, lg: 1.5, xl: 1 },
+                mb: { xs: 2, lg: 1.5, xl: 1 },
                 borderRadius: 2,
                 bgcolor: 'rgba(0,0,0,0.8)',
                 border: '1px solid rgba(255,255,255,0.1)',
