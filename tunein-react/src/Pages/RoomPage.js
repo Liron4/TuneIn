@@ -187,7 +187,7 @@ const RoomPage = () => {
                 sm: '1 1 auto',        // Small: Take available space
                 md: '1 1 70%',         // Medium: 70% width (side by side)
                 lg: '1 1 75%',         // Large: 75% width
-                xl: '1 1 75%'          // XL: 75% width for better balance
+                xl: '1 1 70%'          // XL: 70% width for better balance
               },
               minHeight: {
                 xs: 0,                 // Allow flex shrinking on mobile
@@ -247,7 +247,7 @@ const RoomPage = () => {
                 sm: '1 1 auto',        // Small: Take remaining space
                 md: '0 0 30%',         // Medium: 30% width (side by side)
                 lg: '0 0 25%',         // Large: 25% width
-                xl: '0 0 25%'          // XL: 25% width for balance
+                xl: '0 0 30%'          // XL: 30% width for balance
               },
               minHeight: {
                 xs: '250px',           // Ensure minimum usable height on mobile

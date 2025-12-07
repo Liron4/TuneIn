@@ -258,7 +258,7 @@ const CurrentSong = () => {
           pb: { xl: 2 }
         }}>
           <Box sx={{ 
-            width: '100%',
+            width: { xs: '100%', xl: '90%' },
             maxWidth: '100%',
             maxHeight: '100%',
             aspectRatio: '16/9',
