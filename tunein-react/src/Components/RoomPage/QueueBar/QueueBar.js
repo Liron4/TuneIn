@@ -4,7 +4,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import SearchSong from './SearchSong';
 import SongQueue from './SongQueue';
 
-const LeftBar = ({ roomName, isOpen, setIsOpen }) => {
+const QueueBar = ({ roomName, isOpen, setIsOpen }) => {
   
   return (
     <>
@@ -167,4 +167,4 @@ const LeftBar = ({ roomName, isOpen, setIsOpen }) => {
   );
 };
 
-export default LeftBar;
+export default QueueBar;
