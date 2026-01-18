@@ -64,16 +64,17 @@ exports.playNextSong = async (roomId, io, source = 'unknown') => {
         processPoints(previousSong, source);
 
         if (nextSong.duration) {
-          const delay = exactStartTime + (nextSong.duration * 1000) + 1000 - Date.now();
+          // +1000 for any small delays
+          const SongDurationTimer = exactStartTime + (nextSong.duration * 1000) + 1000 - Date.now();
           TimerManager.setSongDurationTimer(roomId, setTimeout(() => {
             exports.playNextSong(roomId, io, 'natural_end');
-          }, delay));
+          }, SongDurationTimer));
         }
       } catch (error) {
         console.error(`[TRANSITION ERROR] Room ${roomId}:`, error);
         roomsInCountdown.delete(roomId);
       }
-    }, exactStartTime - Date.now());
+    }, TRANSITION_DELAY);
 
     TimerManager.setTransitionTimer(roomId, transitionTimer);
   } catch (error) {
