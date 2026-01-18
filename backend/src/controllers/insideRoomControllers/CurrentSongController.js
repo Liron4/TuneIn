@@ -28,14 +28,14 @@ exports.playNextSong = async (roomId, io, source = 'unknown') => {
     TimerManager.clearAll(roomId);
 
     const room = await Room.findById(roomId);
+    processPoints(room?.currentSong, source);
+
     if (!room || room.songqueue.length === 0) {
-      processPoints(room?.currentSong, source);
       await Room.findByIdAndUpdate(roomId, { currentSong: null });
       Emitter.currentSongUpdated(io, roomId, null, Date.now());
       return;
     }
 
-    const previousSong = room.currentSong;
     const exactStartTime = Date.now() + TRANSITION_DELAY;
     const nextSong = room.songqueue[0];
     const updatedQueue = room.songqueue.slice(1);
@@ -47,7 +47,7 @@ exports.playNextSong = async (roomId, io, source = 'unknown') => {
     Emitter.queueUpdated(io, roomId, updatedQueue, source);
     Emitter.countdownStarted(io, roomId, TRANSITION_DELAY / 1000, nextSong, source, exactStartTime);
 
-    const transitionTimer = setTimeout(async () => {
+    setTimeout(async () => {
       try {
         roomsInCountdown.delete(roomId);
         await Room.findByIdAndUpdate(roomId, { currentSong: songWithMetadata });
@@ -61,8 +61,6 @@ exports.playNextSong = async (roomId, io, source = 'unknown') => {
           source
         });
 
-        processPoints(previousSong, source);
-
         if (nextSong.duration) {
           // +1000 for any small delays
           const SongDurationTimer = exactStartTime + (nextSong.duration * 1000) + 1000 - Date.now();
@@ -75,8 +73,6 @@ exports.playNextSong = async (roomId, io, source = 'unknown') => {
         roomsInCountdown.delete(roomId);
       }
     }, TRANSITION_DELAY);
-
-    TimerManager.setTransitionTimer(roomId, transitionTimer);
   } catch (error) {
     console.error(`[playNextSong ERROR] Room ${roomId}:`, error);
     roomsInCountdown.delete(roomId);
