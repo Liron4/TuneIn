@@ -11,8 +11,8 @@ module.exports = {
     this.emit(io, roomId, 'queueUpdated', { queue, source });
   },
 
-  countdownStarted(io, roomId, countdown, nextSong, source, exactStartTime) {
-    this.emit(io, roomId, 'nextSongCountdown', { countdown, nextSong, source, exactStartTime });
+  countdownStarted(io, roomId, countdown, nextSong, source) {
+    this.emit(io, roomId, 'nextSongCountdown', { countdown, nextSong, source });
   },
 
   skipVoteUpdate(io, roomId, data) {

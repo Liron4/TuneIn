@@ -35,20 +35,20 @@ exports.playNextSong = async (roomId, io, source = 'unknown') => {
       return;
     }
 
-    const exactStartTime = Date.now() + TRANSITION_DELAY;
     const nextSong = room.songqueue[0];
     const updatedQueue = room.songqueue.slice(1);
-    const songWithMetadata = { ...nextSong, startTime: exactStartTime, triggerSource: source };
 
     roomsInCountdown.add(roomId);
     await Room.findByIdAndUpdate(roomId, { songqueue: updatedQueue });
 
     Emitter.queueUpdated(io, roomId, updatedQueue, source);
-    Emitter.countdownStarted(io, roomId, TRANSITION_DELAY / 1000, nextSong, source, exactStartTime);
+    Emitter.countdownStarted(io, roomId, TRANSITION_DELAY / 1000, nextSong, source);
 
     setTimeout(async () => {
       try {
         roomsInCountdown.delete(roomId);
+        const exactStartTime = Date.now();
+        const songWithMetadata = { ...nextSong, startTime: exactStartTime, triggerSource: source };
         await Room.findByIdAndUpdate(roomId, { currentSong: songWithMetadata });
         Emitter.currentSongUpdated(io, roomId, songWithMetadata, exactStartTime);
 
