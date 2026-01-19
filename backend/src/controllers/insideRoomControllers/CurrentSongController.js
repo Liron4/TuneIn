@@ -60,21 +60,24 @@ exports.playNextSong = async (roomId, io, source = 'unknown') => {
           source
         });
 
-        if (nextSong.duration) {
-          // +1000 for any small delays
-          const SongDurationTimer = exactStartTime + (nextSong.duration * 1000) + 1000 - Date.now();
-          TimerManager.setSongDurationTimer(roomId, setTimeout(() => {
-            exports.playNextSong(roomId, io, 'natural_end');
-          }, SongDurationTimer));
-        }
       } catch (error) {
         console.error(`[TRANSITION ERROR] Room ${roomId}:`, error);
         roomsInCountdown.delete(roomId);
+        TimerManager.clearAll(roomId);
       }
     }, TRANSITION_DELAY);
+
+    if (nextSong.duration) {
+      // +1000 for any small delays
+      const songTimerDelay = TRANSITION_DELAY + (nextSong.duration * 1000) + 1000;
+      TimerManager.setSongDurationTimer(roomId, setTimeout(() => {
+        exports.playNextSong(roomId, io, 'natural_end');
+      }, songTimerDelay));
+    }
   } catch (error) {
     console.error(`[playNextSong ERROR] Room ${roomId}:`, error);
     roomsInCountdown.delete(roomId);
+    TimerManager.clearAll(roomId);
   }
 };
 
