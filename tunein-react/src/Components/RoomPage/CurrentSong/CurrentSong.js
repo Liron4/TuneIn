@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Box, Typography, Paper } from '@mui/material';
 import axios from 'axios';
 import MediaPlayer from './MediaPlayer';
@@ -16,260 +16,132 @@ const CurrentSong = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [countdownData, setCountdownData] = useState(null);
-  const initialStartTimeRef = useRef(0); // **BUG FIX #2**: Store initial start time
-  const { newSocket, roomId, isConnected } = useSocket();
+  const initialStartTimeRef = useRef(0);
+  const { newSocket, roomId } = useSocket();
 
-  useEffect(() => {
-    if (!newSocket || !roomId) {
-      console.log('CurrentSong: Waiting for socket connection...');
-      return;
+  // Helper: calculate and store time sync data
+  const syncTimeData = useCallback((serverTime, song) => {
+    const diff = serverTime - Date.now();
+    setServerTimeDiff(diff);
+    if (song) {
+      initialStartTimeRef.current = Math.floor((Date.now() + diff - song.startTime) / 1000);
     }
+    return diff;
+  }, []);
 
-    console.log('CurrentSong: Setting up socket listeners');
+  // Socket listeners
+  useEffect(() => {
+    if (!newSocket || !roomId) return;
 
-    // Listen for current song updates
-    newSocket.on('currentSongUpdated', (data) => {
+    const handleSongUpdate = (data) => {
       setLoading(false);
-      console.log('Received currentSongUpdated event:', data);
-
       if (data.currentSong) {
-        const serverTime = data.serverTime;
-        const clientTime = Date.now();
-        const diff = serverTime - clientTime;
-        setServerTimeDiff(diff);
-
-        // **BUG FIX #2**: Calculate and store initial elapsed time
-        const now = Date.now() + diff;
-        const elapsed = Math.floor((now - data.currentSong.startTime) / 1000);
-        initialStartTimeRef.current = elapsed;
-
+        syncTimeData(data.serverTime, data.currentSong);
         setCurrentSong(data.currentSong);
-        setIsIntroPlaying(false); // Stop intro if a real song starts
-        // **BUG FIX #1**: Clear countdown with explicit null timestamp to force update
+        setIsIntroPlaying(false);
         setCountdownData({ countdown: 0, nextSong: null, clear: Date.now() });
       } else {
         setCurrentSong(null);
       }
-    });
-
-    // Listen for countdown updates
-    newSocket.on('nextSongCountdown', (data) => {
-      console.log('Received countdown event:', data);
-      // **BUG FIX #1**: Pass countdown data to separate component
-      // This prevents re-rendering CurrentSong and MediaPlayer
-      setCountdownData({
-        countdown: data.countdown,
-        nextSong: data.nextSong
-      });
-    });
-
-    // Cleanup listeners
-    return () => {
-      if (newSocket) {
-        newSocket.off('currentSongUpdated');
-        newSocket.off('nextSongCountdown');
-      }
     };
-  }, [newSocket, roomId]); // Dependencies: re-run when socket or roomId changes
 
-  //***** Fetch current song on initial load - auto-start *****
+    const handleCountdown = (data) => {
+      setCountdownData({ countdown: data.countdown, nextSong: data.nextSong });
+    };
+
+    newSocket.on('currentSongUpdated', handleSongUpdate);
+    newSocket.on('nextSongCountdown', handleCountdown);
+
+    return () => {
+      newSocket.off('currentSongUpdated', handleSongUpdate);
+      newSocket.off('nextSongCountdown', handleCountdown);
+    };
+  }, [newSocket, roomId, syncTimeData]);
+
+  // Fetch current song on initial load
   useEffect(() => {
     if (!roomId) return;
 
     const fetchCurrentSong = async () => {
+      const token = localStorage.getItem('authToken');
+      if (!token) return;
+
       try {
         setLoading(true);
-        const token = localStorage.getItem('authToken');
-        if (!token) return;
-
-        console.log('Fetching current song for room:', roomId);
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/song/${roomId}`, {
+        const { data } = await axios.get(`${process.env.REACT_APP_API_URL}/api/song/${roomId}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
-        console.log('Current song response:', response.data);
-
-        if (response.data.currentSong) {
-          // Calculate server-client time difference
-          const serverTime = response.data.serverTime;
-          const clientTime = Date.now();
-          const diff = serverTime - clientTime;
-          setServerTimeDiff(diff);
-
-          // **BUG FIX #2**: Calculate and store initial elapsed time
-          const now = Date.now() + diff;
-          const elapsed = Math.floor((now - response.data.currentSong.startTime) / 1000);
-          initialStartTimeRef.current = elapsed;
-
-          setCurrentSong(response.data.currentSong);
+        if (data.currentSong) {
+          syncTimeData(data.serverTime, data.currentSong);
+          setCurrentSong(data.currentSong);
           setIsIntroPlaying(false);
         } else {
-          // No song playing initially -> Play Intro
           setIsIntroPlaying(true);
         }
-        setLoading(false);
       } catch (err) {
         console.error('Error fetching current song:', err);
         setError('Failed to load the current song');
+      } finally {
         setLoading(false);
       }
     };
 
     fetchCurrentSong();
-  }, [roomId]);
+  }, [roomId, syncTimeData]);
 
-  // Calculate elapsed time since song started
-  const getElapsedSeconds = () => {
-    if (!currentSong || !currentSong.startTime) return 0;
-
-    // Use server-adjusted time
-    const now = Date.now() + serverTimeDiff;
-    return Math.floor((now - currentSong.startTime) / 1000);
-  };
-
-  const handleSkipSuccess = () => {
-    console.log('Song skipped successfully from SkipSong component');
-    setError(null); // Clear any previous errors
-  };
+  const getElapsedSeconds = useCallback(() => {
+    if (!currentSong?.startTime) return 0;
+    return Math.floor((Date.now() + serverTimeDiff - currentSong.startTime) / 1000);
+  }, [currentSong, serverTimeDiff]);
 
 
   if (loading) {
     return (
       <Box sx={{ mb: 4 }}>
-        <Typography
-          variant="h6"
-          sx={{
-            color: 'white',
-            mb: 2,
-            fontWeight: 600
-
-          }}
-        >
+        <Typography variant="h6" sx={{ color: 'white', mb: 2, fontWeight: 600 }}>
           Now Playing
         </Typography>
-        <Box
-          sx={{
-            p: 4,
-            textAlign: 'center',
-            bgcolor: 'rgba(0,0,0,0.2)',
-            borderRadius: 2,
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center'
-          }}
-        >
-          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-            Loading...
-          </Typography>
+        <Box sx={{ p: 4, textAlign: 'center', bgcolor: 'rgba(0,0,0,0.2)', borderRadius: 2, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)' }}>Loading...</Typography>
         </Box>
       </Box>
     );
   }
 
   return (
-    <Box sx={{
-      mb: { xs: 2, md: 2, lg: 1 },
-      width: '100%',
-      minHeight: 'fit-content',
-      maxHeight: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden'
-    }}>
+    <Box sx={{ mb: { xs: 2, md: 2, lg: 1 }, width: '100%', minHeight: 'fit-content', maxHeight: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-      {/* Header section with SkipSong integration */}
-      <Box sx={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start', // Change from 'center' to 'flex-start'
-        mb: { xs: 1.5, md: 1.5, lg: 1 },
-        minHeight: { xs: '32px', md: '36px' }, // Ensure consistent height
-        gap: 1,
-        flexShrink: 0
-      }}>
-        <Typography
-          variant="h6"
-          sx={{
-            color: 'white',
-            fontWeight: 600,
-            fontSize: {
-              xs: '1.1rem',
-              md: '1.25rem'
-            },
-            lineHeight: { xs: '32px', md: '36px' }, // Match the minHeight
-            display: 'flex',
-            alignItems: 'center' // Center the text vertically within its line height
-          }}
-        >
+      {/* Header with SkipSong */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: { xs: 1.5, md: 1.5, lg: 1 }, minHeight: { xs: '32px', md: '36px' }, gap: 1, flexShrink: 0 }}>
+        <Typography variant="h6" sx={{ color: 'white', fontWeight: 600, fontSize: { xs: '1.1rem', md: '1.25rem' }, lineHeight: { xs: '32px', md: '36px' }, display: 'flex', alignItems: 'center' }}>
           Now Playing
         </Typography>
-
         {currentSong && (
-          <Box sx={{
-            display: 'flex',
-            alignItems: 'flex-start', // Align to top to match Typography
-            height: { xs: '32px', md: '36px' }, // Match the minHeight
-            justifyContent: 'flex-end'
-          }}>
-            <SkipSong onSkip={handleSkipSuccess} />
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', height: { xs: '32px', md: '36px' }, justifyContent: 'flex-end' }}>
+            <SkipSong onSkip={() => setError(null)} />
           </Box>
         )}
       </Box>
 
       {error && (
-        <Typography color="error" variant="caption" sx={{ display: 'block', mb: 1 }}>
-          {error}
-        </Typography>
+        <Typography color="error" variant="caption" sx={{ display: 'block', mb: 1 }}>{error}</Typography>
       )}
 
-      {/* Song progress widget */}
       <SongWidget
-        key={currentSong?.startTime || 'no-song'} // Force re-mount for duplicate songs
+        key={currentSong?.startTime || 'no-song'}
         currentSong={currentSong}
         getElapsedSeconds={getElapsedSeconds}
       />
 
-      {/* **BUG FIX #1**: Isolated countdown component prevents parent re-renders */}
       <CountDownMessage countdownData={countdownData} />
 
-      <Paper
-        sx={{
-          p: { xs: 1.5, md: 1.5, lg: 1, xl: 1 },
-          borderRadius: 2,
-          bgcolor: 'rgba(0,0,0,0.4)',
-          maxWidth: '100%',
-          overflow: 'hidden',
-          display: (currentSong || isIntroPlaying) ? 'flex' : 'none',
-          flexDirection: 'column',
-          flex: '1 1 auto',
-          minHeight: 0
-        }}
-      >
-        <Box sx={{ 
-          flex: '1 1 auto', 
-          minHeight: 0, 
-          display: 'flex', 
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          width: '100%',
-          overflow: 'hidden',
-          // Add padding bottom on XL to prevent cut-off
-          pb: { xl: 2 }
-        }}>
-          <Box sx={{ 
-            width: { xs: '100%', xl: '90%' },
-            maxWidth: '100%',
-            maxHeight: '100%',
-            aspectRatio: '16/9',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center'
-          }}>
+      <Paper sx={{ p: { xs: 1.5, md: 1.5, lg: 1, xl: 1 }, borderRadius: 2, bgcolor: 'rgba(0,0,0,0.4)', maxWidth: '100%', overflow: 'hidden', display: (currentSong || isIntroPlaying) ? 'flex' : 'none', flexDirection: 'column', flex: '1 1 auto', minHeight: 0 }}>
+        <Box sx={{ flex: '1 1 auto', minHeight: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', width: '100%', overflow: 'hidden', pb: { xl: 2 } }}>
+          <Box sx={{ width: { xs: '100%', xl: '90%' }, maxWidth: '100%', maxHeight: '100%', aspectRatio: '16/9', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <MediaPlayer
               videoId={currentSong?.id || (isIntroPlaying ? INTRO_VIDEO_ID : null)}
               startTime={currentSong ? initialStartTimeRef.current : 0}
-              songData={currentSong}
               muted={isIntroPlaying}
               onEnded={() => setIsIntroPlaying(false)}
             />
@@ -278,34 +150,12 @@ const CurrentSong = () => {
 
         {currentSong && (
           <Box sx={{ mt: { xs: 1.5, md: 1.5, lg: 1, xl: 0.5 }, flexShrink: 0 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                gap: 1,
-                flexWrap: 'wrap'
-              }}
-            >
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 1, flexWrap: 'wrap' }}>
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography
-                  variant="subtitle1"
-                  sx={{
-                    color: 'white',
-                    fontWeight: 500,
-                    fontSize: { xs: '0.9rem', md: '1rem' },
-                    lineHeight: 1.3
-                  }}
-                >
+                <Typography variant="subtitle1" sx={{ color: 'white', fontWeight: 500, fontSize: { xs: '0.9rem', md: '1rem' }, lineHeight: 1.3 }}>
                   {currentSong.title}
                 </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: 'rgba(255,255,255,0.7)',
-                    fontSize: { xs: '0.8rem', md: '0.875rem' }
-                  }}
-                >
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: { xs: '0.8rem', md: '0.875rem' } }}>
                   Added by: {currentSong.addedby}
                 </Typography>
               </Box>
@@ -315,29 +165,11 @@ const CurrentSong = () => {
       </Paper>
 
       {!currentSong && !isIntroPlaying && (
-        <Box
-          sx={{
-            p: { xs: 3, md: 4 },
-            textAlign: 'center',
-            bgcolor: 'rgba(0,0,0,0.2)',
-            borderRadius: 2,
-            position: 'relative'
-          }}
-        >
-          <Typography
-            variant="body1"
-            sx={{ color: 'rgba(255,255,255,0.7)', fontSize: { xs: '0.9rem', md: '1rem' } }}
-          >
+        <Box sx={{ p: { xs: 3, md: 4 }, textAlign: 'center', bgcolor: 'rgba(0,0,0,0.2)', borderRadius: 2, position: 'relative' }}>
+          <Typography variant="body1" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: { xs: '0.9rem', md: '1rem' } }}>
             No song is currently playing.
           </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              color: 'rgba(255,255,255,0.5)',
-              mt: 1,
-              fontSize: { xs: '0.8rem', md: '0.875rem' }
-            }}
-          >
+          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.5)', mt: 1, fontSize: { xs: '0.8rem', md: '0.875rem' } }}>
             Add songs to the queue to get started!
           </Typography>
         </Box>

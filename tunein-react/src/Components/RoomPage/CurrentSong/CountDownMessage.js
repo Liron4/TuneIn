@@ -7,13 +7,9 @@ const CountDownMessage = ({ countdownData }) => {
   const countdownRef = useRef(null);
 
   useEffect(() => {
-    // When new countdown data arrives
     if (countdownData) {
-      console.log('CountDownMessage: Received countdown data:', countdownData);
-      
-      // **BUG FIX #1**: Check if this is a clear signal
+      // Clear signal received
       if (countdownData.clear || countdownData.countdown <= 0) {
-        console.log('CountDownMessage: Clearing countdown');
         if (countdownRef.current) {
           clearInterval(countdownRef.current);
           countdownRef.current = null;
@@ -26,12 +22,10 @@ const CountDownMessage = ({ countdownData }) => {
       setCountdown(countdownData.countdown);
       setNextSongInfo(countdownData.nextSong);
 
-      // Clear any existing countdown interval
       if (countdownRef.current) {
         clearInterval(countdownRef.current);
       }
 
-      // Start countdown interval
       let secondsLeft = countdownData.countdown;
       countdownRef.current = setInterval(() => {
         secondsLeft -= 1;
@@ -46,7 +40,6 @@ const CountDownMessage = ({ countdownData }) => {
       }, 1000);
     }
 
-    // Cleanup interval on unmount
     return () => {
       if (countdownRef.current) {
         clearInterval(countdownRef.current);

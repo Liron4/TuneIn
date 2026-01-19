@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Box } from '@mui/material';
 
-const MediaPlayer = ({ videoId, startTime = 0, songData, muted = false, onEnded }) => {
+const MediaPlayer = ({ videoId, startTime = 0, muted = false, onEnded }) => {
     const playerRef = useRef(null);
     const youtubePlayerRef = useRef(null);
     const [playerInstance, setPlayerInstance] = useState(null);
@@ -9,67 +9,41 @@ const MediaPlayer = ({ videoId, startTime = 0, songData, muted = false, onEnded 
     const [apiLoaded, setApiLoaded] = useState(!!window.YT);
     const isInitialLoadRef = useRef(true);
 
-    // ADDED: Handle muted prop changes
+    // Handle muted prop changes
     useEffect(() => {
-        if (playerInstance && typeof playerInstance.mute === 'function' && typeof playerInstance.unMute === 'function') {
-            if (muted) {
-                playerInstance.mute();
-            } else {
-                playerInstance.unMute();
-            }
+        if (playerInstance?.mute && playerInstance?.unMute) {
+            muted ? playerInstance.mute() : playerInstance.unMute();
         }
     }, [muted, playerInstance]);
 
-    // Handle NEW songs (videoId prop changes)
+    // Handle new songs (videoId changes)
     useEffect(() => {
         if (!playerInstance || !videoId) return;
-
-        // Don't run this on the *first* load, as the player is already
-        // being created with this videoId.
         if (isInitialLoadRef.current) {
             isInitialLoadRef.current = false;
             return;
         }
-
-        console.log('🎵 New videoId prop received. Loading new video:', videoId);
-        playerInstance.loadVideoById({
-            videoId: videoId,
-            startSeconds: 0 // New songs should start at 0
-        });
-        console.log('📺 loadVideoById called - new video element will be created');
-
+        playerInstance.loadVideoById({ videoId, startSeconds: 0 });
     }, [videoId, playerInstance]);
 
-    // ADDED: Global function to get current time from any component
+    // Expose player time functions globally
     useEffect(() => {
-        // Expose getCurrentTime function globally for ChatPanel access
         window.getYouTubePlayerCurrentTime = () => {
             if (youtubePlayerRef.current && playerReady) {
-                try {
-                    return youtubePlayerRef.current.getCurrentTime();
-                } catch (error) {
-                    console.error('Error getting current time:', error);
-                    return null;
-                }
+                try { return youtubePlayerRef.current.getCurrentTime(); }
+                catch { return null; }
             }
             return null;
         };
 
-        // ADDED: Expose setCurrentTime function globally
         window.setYouTubePlayerCurrentTime = (time) => {
             if (youtubePlayerRef.current && playerReady) {
-                try {
-                    youtubePlayerRef.current.seekTo(time, true);
-                    return true;
-                } catch (error) {
-                    console.error('Error setting current time:', error);
-                    return false;
-                }
+                try { youtubePlayerRef.current.seekTo(time, true); return true; }
+                catch { return false; }
             }
             return false;
         };
 
-        // Cleanup on unmount
         return () => {
             window.getYouTubePlayerCurrentTime = null;
             window.setYouTubePlayerCurrentTime = null;
@@ -83,77 +57,50 @@ const MediaPlayer = ({ videoId, startTime = 0, songData, muted = false, onEnded 
             return;
         }
 
-        console.log('Loading YouTube API...');
         const tag = document.createElement('script');
         tag.src = 'https://www.youtube.com/iframe_api';
+        window.onYouTubeIframeAPIReady = () => setApiLoaded(true);
+        document.getElementsByTagName('script')[0].parentNode.insertBefore(tag, document.getElementsByTagName('script')[0]);
 
-        // Define global callback
-        window.onYouTubeIframeAPIReady = () => {
-            console.log('YouTube API loaded');
-            setApiLoaded(true);
-        };
-
-        const firstScriptTag = document.getElementsByTagName('script')[0];
-        firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
-
-        return () => {
-            // Cleanup the global callback if component unmounts before API loads
-            window.onYouTubeIframeAPIReady = null;
-        };
+        return () => { window.onYouTubeIframeAPIReady = null; };
     }, []);
 
-    // This effect handles the *initial* player creation
+    // Create player instance
     useEffect(() => {
-        // Ensure API is loaded
-        if (!window.YT || !window.YT.Player || !apiLoaded) {
-            console.log('YouTube API not ready yet');
-            return;
-        }
+        if (!window.YT?.Player || !apiLoaded) return;
 
-        if (youtubePlayerRef.current) {
-            youtubePlayerRef.current.destroy();
-        }
+        if (youtubePlayerRef.current) youtubePlayerRef.current.destroy();
 
-        isInitialLoadRef.current = !!videoId; // Set flag for initial load only if we have a video
+        isInitialLoadRef.current = !!videoId;
 
-        console.log('Creating new YouTube player instance');
         youtubePlayerRef.current = new window.YT.Player(playerRef.current, {
             height: '100%',
             width: '100%',
-            videoId: videoId || '', // Allow idle player when no video is active
+            videoId: videoId || '',
             playerVars: {
                 autoplay: 1,
                 controls: 1,
                 disablekb: 0,
                 fs: 0,
                 rel: 0,
-                start: startTime || 0, // Use startTime ONLY for initial load
+                start: startTime || 0,
                 modestbranding: 1,
                 playsinline: 1,
                 mute: muted ? 1 : 0
             },
             events: {
                 onReady: (event) => {
-                    console.log('YouTube player ready');
                     setPlayerReady(true);
-                    setPlayerInstance(event.target); // Save the player to state
-                    if (videoId) {
-                        event.target.playVideo();
-                    }
+                    setPlayerInstance(event.target);
+                    if (videoId) event.target.playVideo();
                 },
                 onStateChange: (event) => {
-                    if (event.data === window.YT.PlayerState.ENDED) {
-                        console.log('Video ended (via player event)');
-                        if (onEnded) onEnded();
-                    }
+                    if (event.data === window.YT.PlayerState.ENDED && onEnded) onEnded();
                 },
-                onError: (event) => {
-                    console.error('YouTube player error:', event.data);
-                }
+                onError: (event) => console.error('YouTube player error:', event.data)
             }
         });
 
-        // Cleanup on unmount
         return () => {
             if (youtubePlayerRef.current) {
                 youtubePlayerRef.current.destroy();
@@ -162,45 +109,22 @@ const MediaPlayer = ({ videoId, startTime = 0, songData, muted = false, onEnded 
             setPlayerInstance(null);
             setPlayerReady(false);
         };
-    }, [apiLoaded]); // This effect runs only once when API is loaded
+    }, [apiLoaded]);
 
+    // Idle player when no video
     useEffect(() => {
         if (!playerInstance || videoId) return;
-
         try {
-            console.log('⏸️ No active videoId; keeping player alive in idle state');
             playerInstance.stopVideo();
-            if (typeof playerInstance.clearVideo === 'function') {
-                playerInstance.clearVideo();
-            }
-        } catch (error) {
-            console.error('Error idling YouTube player:', error);
-        }
+            playerInstance.clearVideo?.();
+        } catch {}
     }, [videoId, playerInstance]);
 
     return (
         <Box>
-            <Box
-                sx={{
-                    position: 'relative',
-                    paddingTop: '56.25%', // 16:9 aspect ratio
-                    overflow: 'hidden',
-                    borderRadius: 1
-                }}
-            >
-                <Box
-                    ref={playerRef}
-                    sx={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        width: '100%',
-                        height: '100%'
-                    }}
-                />
+            <Box sx={{ position: 'relative', paddingTop: '56.25%', overflow: 'hidden', borderRadius: 1 }}>
+                <Box ref={playerRef} sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }} />
             </Box>
-            
-            
         </Box>
     );
 };
