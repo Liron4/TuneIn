@@ -25,7 +25,6 @@ const SearchSong = () => {
       setSearching(true);
       setError(null);
 
-      // Call your backend proxy endpoint
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/youtube/search?q=${encodeURIComponent(query)}`);
       setSearchResults(response.data.items || []);
     } catch (err) {
@@ -40,32 +39,26 @@ const SearchSong = () => {
 
 const handleSongAction = async (song) => {
   try {
-    // Get token from localStorage
     const token = localStorage.getItem('authToken');
     if (!token) throw new Error('No auth token found');
 
-    // Fetch user profile to get the username (only token needed)
     const profileRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/user/profile`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const username = profileRes.data.nickname;
 
-    // Fetch video duration
     const videoId = song.id.videoId;
     const durationRes = await axios.get(
       `${process.env.REACT_APP_API_URL}/api/youtube/duration?id=${videoId}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
-    // Extract duration directly from response
     const durationInSeconds = durationRes.data.duration;
 
-    // If duration is not found, throw error to prevent adding the song
     if (!durationInSeconds) {
       throw new Error('Could not retrieve song duration');
     }
 
-    // Format the song object
     const formattedSong = {
       title: song.snippet.title,
       artist: song.snippet.channelTitle,
@@ -75,7 +68,6 @@ const handleSongAction = async (song) => {
       duration: durationInSeconds
     };
 
-    // Send to backend (extract roomId from URL path)
     const pathParts = window.location.pathname.split('/');
     const roomId = pathParts[pathParts.indexOf('room') + 1];
     if (!roomId) throw new Error('No roomId found in URL path');
@@ -87,11 +79,9 @@ const handleSongAction = async (song) => {
     );
 
     console.log('Song added to queue successfully!');
-    setSearchResults([]); // Clear search results on success
-    // Optionally show success message to user
+    setSearchResults([]); 
     } catch (err) {
     console.error('Error adding song to queue:', err);
-    // Optionally show error message to user
   }
 };
 
@@ -150,7 +140,6 @@ const handleSongAction = async (song) => {
         </Box>
       )}
 
-      {/* Render search results if any */}
       {searchResults.length > 0 && (
         <Box sx={{ mt: 2 }}>
           <Typography variant="subtitle2" sx={{ mb: 1, color: 'rgba(255,255,255,0.8)' }}>

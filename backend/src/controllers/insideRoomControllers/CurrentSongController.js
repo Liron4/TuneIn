@@ -1,5 +1,4 @@
 const Room = require('../../models/Room');
-const LiveViewersController = require('./VotingSystem/LiveViewersController');
 const SkipVotingService = require('./VotingSystem/SkipVotingService');
 const ViewerTrackingService = require('./VotingSystem/ViewerTrackingService');
 const UpdateUserPoints = require('./UpdateUserPoints');
@@ -24,7 +23,7 @@ exports.playNextSong = async (roomId, io, source = 'unknown') => {
   if (roomsInCountdown.has(roomId)) return;
 
   try {
-    LiveViewersController.clearRoomSkipVotes(roomId, source);
+    SkipVotingService.clearRoomSkipVotes(roomId);
     TimerManager.clearAll(roomId);
 
     const room = await Room.findById(roomId);
